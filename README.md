@@ -6,7 +6,7 @@ Gesture Controlled Smart Light Switch
 
 
 ## Project Schedule Wiki Page
-[Project Schedule](https://github.com/CU-ECEN-5823/f20-final-project/wiki/Project-Schedule)
+[Project Schedule](https://github.com/CU-ECEN-5823/ecen5823-courseproject-chth2844/wiki/Project-Schedule)
 
 ## Team Members
 Update team members names
