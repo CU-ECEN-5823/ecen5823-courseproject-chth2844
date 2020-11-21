@@ -10,8 +10,8 @@
  * @course      ECEN 5823-001: IoT Embedded Firmware (Fall 2020)
  * @instructor  David Sluiter
  *
- * @assignment ecen5823-assignment5-ruchaborwankar
- * @due        Sep 18, 2020
+ * @assignment server code for final project
+ * @due        Dec 3, 2020
  *
  * @resources  https://www.silabs.com/documents/public/reference-manuals/bluetooth-api-reference.pdf
  *				silicon labs example-soc thermometer
@@ -97,6 +97,7 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 			            bool_flag=0;
 			          }
 			}*/
+			//for relay service
 			if ((evt->data.evt_gatt_server_characteristic_status.characteristic == gattdb_relay_state)
 									            && (evt->data.evt_gatt_server_characteristic_status.status_flags == gatt_server_client_config))
 			{
@@ -153,6 +154,7 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 		break;
 
 		case gecko_evt_system_external_signal_id:
+			//for now checking external signal after every 3 sec using letimer
 			LOG_INFO("external_system_signal_id reached\n");
 			if(conn_done==1){
 			if(toggle==1){
