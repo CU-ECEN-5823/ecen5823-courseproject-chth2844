@@ -109,6 +109,18 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 			       	   bool_relay_flag=0;
 			          }
 			}
+			//for relay service
+						if ((evt->data.evt_gatt_server_characteristic_status.characteristic == gattdb_sensor_reading)
+												            && (evt->data.evt_gatt_server_characteristic_status.status_flags == gatt_server_client_config))
+						{
+						          if (evt->data.evt_gatt_server_characteristic_status.client_config_flags == gatt_indication)
+						          {/*indication on*/
+						        	  bool_sensor_flag=1;
+						          } else if (evt->data.evt_gatt_server_characteristic_status.client_config_flags == gatt_disable) {
+						            /* Indications have been turned OFF */
+						       	   bool_sensor_flag=0;
+						          }
+						}
 		/*set global max tx power*/
 		BTSTACK_CHECK_RESPONSE(gecko_cmd_le_connection_get_rssi(connection));
 		LOG_INFO("evt_characteristics\n");

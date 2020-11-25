@@ -34,6 +34,7 @@
 
 bool bool_flag;
 bool bool_relay_flag;
+bool bool_sensor_flag;		//for sensor reading indication
 uint8_t start_sm_flag;
 void handle_ble_event(struct gecko_cmd_packet *evt);
 #endif /* SRC_BLE_H_ */

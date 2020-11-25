@@ -150,6 +150,32 @@ void temp_read_ble(float temp){
 				//BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF, gattdb_temperature_measurement, 5, htmTempBuffer));
 		}
 }
+
+//change accordingly
+void lux_read_ble(float temp){
+		uint8_t htmTempBuffer[5]; /* Stores the temperature data in the Health Thermometer (HTM) format. */
+		uint32_t temperature;   /* Stores the temperature data read from the sensor in the correct format */
+		uint8_t *p = htmTempBuffer; /* Pointer to HTM temperature buffer needed for converting values to bitstream. */
+		//uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no temperature type. */
+
+		/* Convert flags to bitstream and append them in the HTM temperature data buffer (htmTempBuffer) */
+		UINT8_TO_BITSTREAM(p,0);
+		//LOG_INFO("uint8 to bitstream done\n");
+		/* Convert sensor data to correct temperature format */
+		temperature = FLT_TO_UINT32(temp*1000, -3);
+		//displayPrintf(DISPLAY_ROW_TEMPVALUE,temperature);
+		/* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
+		UINT32_TO_BITSTREAM(p, temperature);
+		/* Send indication of the temperature in htmTempBuffer to all "listening" clients.
+		* This enables the Health Thermometer in the Blue Gecko app to display the temperature.
+		*  0xFF as connection ID will send indications to all connections. */
+		//if the indicate is set,then it will send the notification and bitstream.
+		displayPrintf(DISPLAY_ROW_TEMPVALUE,"Temp:%f",temp);
+		if(bool_sensor_flag==1)
+		{
+				BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF, gattdb_sensor_reading, 5, htmTempBuffer));
+		}
+}
 /* Function 	:state_machine(struct gecko_cmd_packet *evt)
  * Description  :This state machine is used to calculate the temperature wherein:
  * 				state 1:stateidle checks for the UF flag to set after every 3 sec,if set it initiates i2c,
