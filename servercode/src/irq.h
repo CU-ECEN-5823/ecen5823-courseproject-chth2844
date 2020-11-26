@@ -40,10 +40,7 @@
 #include "i2c.h"
 #include "scheduler.h"
 
-uint8_t timer_flag;
-uint8_t roll_over;
+//function prototypes
 void LETIMER0_IRQHandler();
-
-uint32_t getMyMilliseconds(void); // DOS
 
 #endif /* SRC_IRQ_H_ */

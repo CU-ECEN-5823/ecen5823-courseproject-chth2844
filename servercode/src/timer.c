@@ -102,7 +102,7 @@ void LETIMER_setup(void)
  * */
 void timerWaitus(uint32_t stab_time)
 {
-		timer_flag=0;
+		//timer_flag=0;
 
 
 		uint32_t       stab_time_cnt, current_cnt;
@@ -137,3 +137,5 @@ void timerWaitus(uint32_t stab_time)
 		LETIMER_IntEnable(LETIMER0, LETIMER_IEN_COMP1);         // Comp1 interrupt enable
 
 }
+
+

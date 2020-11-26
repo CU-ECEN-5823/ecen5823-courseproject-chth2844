@@ -19,6 +19,8 @@ void gpioLed0SetOff();
 void gpioLed1SetOn();
 void gpioLed1SetOff();
 void gpioSetDisplayExtcomin(bool high);
+void gpioSensorSetOn();
+void gpioSensorSetOff();
 
 #define GPIO_SET_DISPLAY_EXT_COMIN_IMPLEMENTED (1)
 //#define GPIO_DISPLAY_SUPPORT_IMPLEMENTED (1)

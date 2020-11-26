@@ -21,168 +21,160 @@
  */
 
 #include "i2c.h"
+#include "math.h"
+#define INCLUDE_LOG_DEBUG 1
+uint8_t device_address=0x39; //Address of LUX Sensor
+uint8_t write_command[2];
+uint16_t read_buffer[2];         //Read value from Sensor is stored here
+I2C_TransferReturn_TypeDef transferstatus;
+I2C_TransferSeq_TypeDef seq;
+int transfer;
+
+
 
 /*
- * I2c read,write buffers and read and write transferSeq for interrupt based i2c interrupt based functions.
+ * Function Name:void InitI2C()
+ *
+ * Description: Initializes I2C peripheral
+ * .
+ * Parameters: None
+ *
+ *  Silab API's Used: void I2CSPM_Init(I2CSPM_Init_TypeDef *init);
+ *
+ * Returns: None
+ *
  */
-uint8_t read_buf[2]={0,0};
-uint8_t write_buf[1]={0xF3};
-I2C_TransferSeq_TypeDef i2c_read_seq=
+void InitI2C()
 {
-		  .addr = (0x40)<<1,
-		  .flags = I2C_FLAG_READ,
-		  .buf[0].data = read_buf,
-		  .buf[0].len	= 2,
-};
 
-I2C_TransferSeq_TypeDef i2c_write_seq=
+I2CSPM_Init_TypeDef init;
+init.port= I2C0;                      /* Use I2C instance 0 */
+init.sclPort= gpioPortC;                  /* SCL port */
+init.sclPin= 10;                         /* SCL pin */
+init.sdaPort= gpioPortC;                  /* SDA port */
+init.sdaPin=11;                         /* SDA pin */
+init.portLocationScl=14;                         /* Location of SCL */
+init.portLocationSda=16;                         /* Location of SDA */
+init.i2cRefFreq=0;                          /* Use currently configured reference clock */
+init.i2cMaxFreq=I2C_FREQ_STANDARD_MAX;      /* Set to standard rate  */
+init.i2cClhr=i2cClockHLRStandard;       /* Set to use 4:4 low/high duty cycle */
+I2CSPM_Init(&init);
+NVIC_EnableIRQ(I2C0_IRQn);
+}
+
+/*
+ * Function Name: void writeI2C()
+ *
+ * Description:Performs I2C Write Operation
+ * .
+ * Parameters: None
+ *
+ *  Silab API's Used:I2C_TransferReturn_TypeDef I2CSPM_Transfer(I2C_TypeDef *i2c, I2C_TransferSeq_TypeDef *seq)
+ *
+ * Returns: None
+ *
+ */
+void writeI2C()
 {
-     	  .addr = (0x40)<<1,
-		  .flags = I2C_FLAG_WRITE,
-		  .buf[0].data=write_buf,
-		  .buf[0].len=1
-};
 
 
-/* Function 	: I2C_init()
- * Description  : The initialization for the I2C for temperature sensor using the
- *				  I2CSPM_Init_Typedef structure that consists of initialization for
- *				  port,pins,location of respective pins,configuring the clock,the type for pins
- *				  is open drain GPIO type with High frequency clock.
- * 	Return		: No return value
-*/
-void I2C_init(){
-//header file
-	I2CSPM_Init_TypeDef I2C_init =
-	{ 	I2C0,                       /* Use I2C instance 0 */                       \
-		gpioPortC,                  /* SCL port */                                 \
-	    SCL_pin,                   /* SCL pin */                                  \
-		gpioPortC,                  /* SDA port */                                 \
-	    SDA_pin,                         /* SDA pin */                                  \
-	    14,                         /* Location of SCL */                          \
-	    16,                         /* Location of SDA */                          \
-	    0,                          /* Use currently configured reference clock */ \
-	    I2C_FREQ_STANDARD_MAX,      /* Set to standard rate  */                    \
-	    i2cClockHLRStandard,        /* Set to use 4:4 low/high duty cycle */
-	 };
-	I2CSPM_Init(&I2C_init);
-	//uint32_t i2c_bus_frequency = I2C_BusFreqGet (I2C0);
-#ifdef DEBUG
-	LOG_INFO("i2c clock value=%ld",i2c_bus_frequency);
-#endif
-}
+
+ seq.addr= device_address << 1; //Perform a write to device at I2C address 0x40
+ seq.flags=I2C_FLAG_WRITE;
+ seq.buf[0].data=write_command;  //Write command for temperature measurement
+ seq.buf[0].len=1; //length of Write command (bytes)
+ transferstatus=I2C_TransferInit(I2C0,&seq);
+
+ }
 
 
-/* Function 	: I2C_write(uint8_t data,uint8_t len)
- * Parameters	: Data and length
- * Description  : The write function for the I2C consists of the I2C_TransferSeq_Typedef which consists of
- * 				  parameters which take command i.e 0xF3 which puts it in the No hold master mode.
- * 				  The flag here is set as I2C_FLAG_WRITE and seq.addr takes the device address which in case of SI7021 is 0x40
- * Return value : No return value but the function checks the I2C_Transfer function that
- * 				  returns the TransferDone value i.e 0 on successful write.
-*/
-void i2c_write(uint8_t *write_data, uint8_t len)
+
+
+
+void i2c_write_command(uint8_t command,uint8_t opcode)
 {
-	I2C_TransferSeq_TypeDef write_Init;
-	I2C_TransferReturn_TypeDef ret = 0;
-	write_Init.addr = (0x40 << 1);
-	write_Init.flags = I2C_FLAG_WRITE;
-	write_Init.buf[0].data = write_data;
-	write_Init.buf[0].len = len;
-	ret = I2CSPM_Transfer(I2C0,&write_Init);
-	LOG_INFO("%d=ret from write",ret);
-}
 
-/* Function 	: I2C_write_interrupt
- * Parameters	: Data and length
- * Description  : The write function for the I2C interrupt based will enable i2c and the initialize transfer init
- * Return value : checks and returns the the TransferDone value i.e 0 on successful write.
-*/
-uint16_t i2c_write_interrupt(){
-		I2C_TransferReturn_TypeDef i2c_ret_status = 0;
-		write=1;
-#ifdef DEBUG
-		LOG_INFO("IN write interrupt i2c func\n");
-#endif
-		NVIC_EnableIRQ(I2C0_IRQn);
-		I2C_Enable(I2C0,true);
-		i2c_ret_status = I2C_TransferInit(I2C0,&i2c_write_seq);
-		return i2c_ret_status;
+
+	write_command[0]                  = command; // command register address
+	write_command[1]                  = opcode; // command opcode
+
+
+	seq.addr	=	device_address << 1;
+	seq.flags	=	I2C_FLAG_WRITE_WRITE;
+	seq.buf[0].data = &write_command[0];
+	seq.buf[1].data = &write_command[1];
+	seq.buf[0].len	=	1;
+	seq.buf[1].len	=	1;
+
+	transferstatus = I2CSPM_Transfer (I2C0, &seq);
+
 
 }
 
-/* Function 	: I2C_read()
- * Description  : The read function for the I2C consists of the I2C_TransferSeq_Typedef which consists of
- * 				  parameters like data and length are passed which help store the received value from I2C transfer.
- * 				  The flag here is set as I2C_FLAG_READ and seq.addr takes the device address which in case of SI7021 is 0x40.
- * 				  The received data is stored in a buffer which is then shifted and stored in a 16 bit integer variable then used to
- * 				  calculate temperature in degree Celsius.The value is stored in float variable temp.
- * Return value : Returns the float temperature value in degree celsius.
-*/
-float i2c_read(uint8_t *read_data, uint8_t len)
+void i2c_read(uint8_t command)
 {
-	I2C_TransferSeq_TypeDef read_Init;
-	I2C_TransferReturn_TypeDef ret = 0;
-	read_Init.addr = (0x40 << 1);
-	read_Init.flags = I2C_FLAG_READ;
-	read_Init.buf[0].data = read_data;
-	read_Init.buf[0].len = len;
-	ret = I2CSPM_Transfer(I2C0,&read_Init);
-	LOG_INFO("Read is %d",ret);
-	float temp;
-		int16_t comb_data = (read_data[0]<<8) + (read_data[1]);
-		temp = (float)((175.72*(comb_data)) / 65536 ) - 46.85;
-		return temp;
+
+	write_command[0]                  = command; // data high register address
+
+	seq.addr        = device_address << 1;
+	seq.flags       = I2C_FLAG_WRITE_READ;  // performs a write followed by a read
+	seq.buf[0].data = (uint8_t*) &write_command[0];
+	seq.buf[0].len  = 1; // write 1 byte,
+	seq.buf[1].data = (uint8_t*) &read_buffer;
+	seq.buf[1].len  = 2; // read 2 bytes back
+
+	transferstatus = I2CSPM_Transfer (I2C0, &seq);
+
 }
 
-/* Function 	: temp_calc
- * Description  : In this,converts the read value into float value for temperature according to the data sheet.
- * Return value : Returns the float temperature value in degree celsius.
-*/
-float temp_calc(){
-	float temp;
-	int16_t comb_data = (read_buf[0]<<8) + (read_buf[1]);
-	temp = (float)((175.72*(comb_data)) / 65536 ) - 46.85;
-#ifdef DEBUG
-	LOG_INFO("%f=temperature",temp);
-#endif
-	return temp;
-}
-
-/* Function 	: I2C_read_interrupt()
- * Description  : The read function initializes the irq to receive irq and then status is checked of transfer init function.
- * Return value : Returns read transfer done value.
-*/
-
-uint16_t i2c_read_interrupt()
+void i2c_write_byte(uint8_t byte)
 {
-	I2C_TransferReturn_TypeDef i2c_status = 0;
-	read=1;
-#ifdef DEBUG
-	LOG_INFO("IN read interrupt i2c func\n");
-#endif
-	NVIC_EnableIRQ(I2C0_IRQn);
-	i2c_status = I2C_TransferInit(I2C0,&i2c_read_seq);
-	return i2c_status;
+	write_command[0]=byte;
+	seq.addr= device_address << 1; //Perform a write to device at I2C address 0x39
+	seq.flags=I2C_FLAG_WRITE;
+	seq.buf[0].data=&write_command[0];  //Write command for temperature measurement
+	seq.buf[0].len=1; //length of Write command (bytes)
+	transferstatus=I2C_TransferInit(I2C0,&seq);
+
 }
 
-/* Function 	: Sensor_enable()
- * Description  : Function enables GPIO PD15 which is Sensor enable pin which is used for load power management
-*/
-void Sensor_enable(){
-#ifdef DEBUG
-	LOG_INFO("REACHED HERE\n\r");
-#endif
-	GPIO_PinModeSet(gpioPortD,SEN_pin,gpioModePushPull,true);
-	GPIO_PinOutSet(SEN_port,SEN_pin);
+void get_ADC_Channel_values(double* ch1,double* ch0)
+{
+
+	i2c_read(TSL2561_CMD|(TSL2561_REG_DATA_1&0x0F));
+	*ch1=read_buffer[0]+read_buffer[1]*256;
+
+    i2c_read(TSL2561_CMD|(TSL2561_REG_DATA_0&0x0F));
+    *ch0=read_buffer[0]+read_buffer[1]*256;
 }
 
-/* Function 	: Sensor_disable()
- * Description  : Function disables GPIO PD15 which is Sensor enable pin which is used for load power management
-*/
-void Sensor_disable(){
-GPIO_PinOutClear(SEN_port,SEN_pin);
-GPIO_PinModeSet(SEN_port, SEN_pin, gpioModeDisabled, false);
-}
+void calculate_Lux(double ch1,double ch0,double* result)
+{
+	double ratio;
 
+	if ((ch1 != 0) && (ch0 != 0)) //Avoid divide by zero error
+	{
+		 ratio = ch1/ ch0;
+
+
+		if ((ratio <= 0.5) && (ratio > 0.0))
+		{
+			*result = (0.0304 * ch0) - ((0.062 * ch0) * (pow((ch1/ch0), 1.4)));
+		}
+		else if ((ratio <= 0.61) && (ratio > 0.5))
+		{
+			*result = (0.0224 * ch0) - (0.031 * ch1);
+		}
+		else if ((ratio <= 0.80) && (ratio > 0.61))
+		{
+			*result = (0.0128 * ch0) - (0.0153 * ch1);
+		}
+		else if ((ratio <= 1.3) && (ratio > 0.8))
+		{
+			*result = (0.00146 * ch0) - (0.00112*ch1);
+		}
+		else
+			*result = 0.0;
+	}
+}
 

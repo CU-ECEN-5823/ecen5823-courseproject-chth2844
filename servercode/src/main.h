@@ -50,8 +50,8 @@
 
 //#define LOWEST_ENERGY_MODE 0
 //#define LOWEST_ENERGY_MODE 1
-#define LOWEST_ENERGY_MODE 2		//energy mode 2 is setup
-//#define LOWEST_ENERGY_MODE 3
+//#define LOWEST_ENERGY_MODE 2		//energy mode 2 is setup
+#define LOWEST_ENERGY_MODE 3
 
 struct gecko_cmd_packet *evt;
 #if LOWEST_ENERGY_MODE == 0
