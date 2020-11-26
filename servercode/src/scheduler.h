@@ -43,6 +43,9 @@
 #include "infrastructure.h"
 #include "native_gecko.h"
 
+//defines
+#define LUX_THRESHOLD  3
+
 //typedef enum {
 //	stateIdle = 0,						//initial state
 //	wait_for_power_up = 1,				//sensor enable and i2c initialization with wait for stabilization time 80ms

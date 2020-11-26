@@ -37,7 +37,7 @@ Lux_Event_t         lux_event;
 State_t           currentState;
 State_t    nextState = STATE0_TIMER_WAIT;
 double lux;
-int lux2;
+uint32_t lux2;
 double channel1;
 double channel0;
 uint8_t sensor_enable=0;
@@ -165,30 +165,59 @@ void temp_read_ble(float temp){
 		}
 }
 
-//change accordingly
-void lux_read_ble(float temp){
-		uint8_t htmTempBuffer[5]; /* Stores the temperature data in the Health Thermometer (HTM) format. */
-		uint32_t temperature;   /* Stores the temperature data read from the sensor in the correct format */
-		uint8_t *p = htmTempBuffer; /* Pointer to HTM temperature buffer needed for converting values to bitstream. */
-		//uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no temperature type. */
+void switch_relay_state(uint32_t lum)
+{
+	//luminosity is less than threshold value switch on relay
+	if(lum<LUX_THRESHOLD)
+	{
+		GPIO_PinOutSet(RELAY_port,RELAY_pin);
+	    displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
+	    int op=GPIO_PinInGet(RELAY_port,RELAY_pin);
+	    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op));
+	    if (bool_relay_flag==1){
+	    	BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op));
+	     }
+	}
 
-		/* Convert flags to bitstream and append them in the HTM temperature data buffer (htmTempBuffer) */
-		UINT8_TO_BITSTREAM(p,0);
-		//LOG_INFO("uint8 to bitstream done\n");
-		/* Convert sensor data to correct temperature format */
-		temperature = FLT_TO_UINT32(temp*1000, -3);
-		//displayPrintf(DISPLAY_ROW_TEMPVALUE,temperature);
-		/* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
-		UINT32_TO_BITSTREAM(p, temperature);
-		/* Send indication of the temperature in htmTempBuffer to all "listening" clients.
-		* This enables the Health Thermometer in the Blue Gecko app to display the temperature.
-		*  0xFF as connection ID will send indications to all connections. */
-		//if the indicate is set,then it will send the notification and bitstream.
-		displayPrintf(DISPLAY_ROW_TEMPVALUE,"Temp:%f",temp);
-		if(bool_sensor_flag==1)
-		{
-				BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF, gattdb_sensor_reading, 5, htmTempBuffer));
+	//luminosity is greater than threshold value switch off relay
+	else{
+
+		GPIO_PinOutClear(RELAY_port,RELAY_pin);
+		displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
+		int op2=GPIO_PinInGet(RELAY_port,RELAY_pin);
+		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op2));
+	    if (bool_relay_flag==1){
+		   BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op2));
 		}
+
+
+	}
+}
+
+void lux_read_ble(uint32_t lux)
+{
+	uint8_t TempBuffer[5]; /* Stores the temperature data in the Health Thermometer (HTM) format. */
+	uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no temperature type. */
+    uint8_t *p = TempBuffer; /* Pointer to HTM temperature buffer needed for converting values to bitstream. */
+
+
+
+    /* Convert flags to bitstream and append them in the HTM temperature data buffer */
+    UINT8_TO_BITSTREAM(p, flags);
+
+    /* Convert sensor data to correct temperature format */
+    lux=FLT_TO_UINT32(lux,0);
+
+    /* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
+    UINT32_TO_BITSTREAM(p, lux);
+
+    gecko_cmd_gatt_server_send_characteristic_notification(
+    	    0xFF,gattdb_sensor_reading, 5, TempBuffer);
+
+
+
+
+
 }
 /* Function 	:state_machine(struct gecko_cmd_packet *evt)
  * Description  :This state machine is used to calculate the temperature wherein:
@@ -244,7 +273,7 @@ void state_machine(struct gecko_cmd_packet *evt) {
 #endif
 				sensor_enable=1;
 				i2c_write_command(TSL2561_REG_CONTROL,0x03);
-				timerWaitus(380000);
+				timerWaitus(420000);
 				nextState=STATE2_READ_ADC;
 			}
 
@@ -259,9 +288,9 @@ void state_machine(struct gecko_cmd_packet *evt) {
 #ifdef DEBUG
 				LOG_INFO("2");
 #endif
-				for (int i = 0; i < 1750000; ) {
-						  i=i+1;
-					}
+//				for (int i = 0; i < 1750000; ) {
+//						  i=i+1;
+//					}
 				get_ADC_Channel_values(&channel1,&channel0);
 				nextState = STATE3_REPORT;
 
@@ -278,13 +307,14 @@ void state_machine(struct gecko_cmd_packet *evt) {
 #endif
 
 				calculate_Lux(channel1,channel0,&lux);
-				lux2=(int)lux;
+				lux2=(uint32_t)lux;
 				displayPrintf(DISPLAY_ROW_TEMPVALUE,"Luminosity=%d",lux2);
-				LOG_INFO("Luminosity: %d",lux2);
-				//LOG_INFO("lux: %f",lux);
+				lux_read_ble(lux2); //Display and Send BLE Value
+				switch_relay_state(lux2); //control relay state
 
-				i2c_write_command(TSL2561_REG_CONTROL,0x00); //power down sensor
-				sensor_enable=0;
+
+               i2c_write_command(TSL2561_REG_CONTROL,0x00); //power down sensor
+				sensor_enable=0; //sensor disabled
 				gpioSensorSetOff(); //turn sensor off
 				nextState=STATE0_TIMER_WAIT;
 
