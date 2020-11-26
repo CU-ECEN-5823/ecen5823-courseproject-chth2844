@@ -57,6 +57,8 @@ typedef enum uint32_t{
 	timer_comp1_flag=2,
 	write_transfer_done=4,  // DOS define these as a single bit so we can set and clear individual bits
 	read_transfer_done=8,
+	PB0_pressed,
+	PB0_released,
 }temp_events;
 
 temp_events event;

@@ -158,11 +158,13 @@ void lux_read_ble(float temp){
 		uint8_t *p = htmTempBuffer; /* Pointer to HTM temperature buffer needed for converting values to bitstream. */
 		//uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no temperature type. */
 
+		//typecast to int
+		uint8_t lux_int=(uint8_t)temp;
 		/* Convert flags to bitstream and append them in the HTM temperature data buffer (htmTempBuffer) */
 		UINT8_TO_BITSTREAM(p,0);
 		//LOG_INFO("uint8 to bitstream done\n");
 		/* Convert sensor data to correct temperature format */
-		temperature = FLT_TO_UINT32(temp*1000, -3);
+		//temperature = FLT_TO_UINT32(temp*1000, -3);
 		//displayPrintf(DISPLAY_ROW_TEMPVALUE,temperature);
 		/* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
 		UINT32_TO_BITSTREAM(p, temperature);

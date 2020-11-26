@@ -10,6 +10,8 @@
 #include <stdbool.h>
 #define RELAY_port gpioPortC
 #define RELAY_pin  9
+#define PB0_port gpioPortF
+#define PB0_pin  6
 
 void gpioInit();
 void gpioLed0SetOn();
