@@ -19,29 +19,22 @@
 
 //extern uint32_t    sysTicks;   // # of ticks, defined in main.c // DOS
 
+
+
+extern uint32_t timestamp;
+/**
+ * @return a timestamp value for the logger, typically based on a free running timer.
+ * This will be printed at the beginning of each log message.
+ */
 uint32_t loggerGetTimestamp(void)
 {
 	//return timerGetRunTimeMilliseconds();
 	//return 0;
-    /*#ifdef MY_USE_SYSTICKS
+    #ifdef MY_USE_SYSTICKS
 	   return getSysTicks();
     #else
-	   return (0);
-    #endif*/
-	    //uint32_t current_counter,counter,time_elapsed_current,time_elapsed_total;
-		//counter=roll_over+interrupt_occured_at;
-	    //DOS
-		//current_counter=LETIMER_CounterGet(LETIMER0);
-		//time_elapsed_current=(((comp0-current_counter)*1000)/actual_clk_freq);
-		//time_elapsed_total=roll_over+time_elapsed_current;
-		//return time_elapsed_total;
-#ifdef USE_SYSTICKS
-	    return (sysTicks); // DOS
-#else
-		return ( getMyMilliseconds() ); // DOS
-#endif
-
-
+	   return (timestamp);
+    #endif
 }
 
 /**

@@ -31,7 +31,16 @@
 #include "native_gecko.h"
 #include "gecko_ble_errors.h"
 #include "display.h"
-float temp;
+#include "gpio.h"
+//float temp;
+Lux_Event_t         lux_event;
+State_t           currentState;
+State_t    nextState = STATE0_TIMER_WAIT;
+double lux;
+int lux2;
+double channel1;
+double channel0;
+uint8_t sensor_enable=0;
 
 
 /* Function 	: schedulerSetEvent()
@@ -39,10 +48,7 @@ float temp;
  * 				  interrupt occuring after 3 sec.
  * */
 void schedulerSetEvent(uint32_t var) {
- // set the event, this is a read-modify-write
-	//LOG_INFO("In scheduler\n");
-	// DOS this needs to be a read-modify-write called from ISR within CORE_ENTER_CRITICAL/CORE_EXIT_CRITICAL section
-	//event_flag |= var; // or in the bits that are set
+
 	gecko_external_signal(var);
 }
 
@@ -65,61 +71,69 @@ bool events_present() {
  * Description  : When event occurs the process_event will then be used to
  * 				  get temperature readings from the sensor.
  * */
-void process_event(){
-		   uint8_t write_buf[1]={0xF3};
-					   		uint8_t read_buf[2]={0,0};
-					   		float temp = 0.0;
-
-					   //reset gloabl variable i.e flag to scheduler model
-					   		//event_val=0;
-
-					   		Sensor_enable();
-					   		timerWaitus(80);
-					   		while(timer_flag!=1);
-					   		i2c_write(write_buf,1);
-					   		timerWaitus(10);
-					   		while(timer_flag!=1);
-					   		temp=i2c_read(read_buf,2);
-					   		LOG_INFO("Temp is %f",temp);
-					   		Sensor_disable();		//disables all the gpio pins
-	}
+//void process_event(){
+//		   uint8_t write_buf[1]={0xF3};
+//					   		uint8_t read_buf[2]={0,0};
+//					   		float temp = 0.0;
+//
+//					   //reset gloabl variable i.e flag to scheduler model
+//					   		//event_val=0;
+//
+//					   		Sensor_enable();
+//					   		timerWaitus(80);
+//					   		while(timer_flag!=1);
+//					   		i2c_write(write_buf,1);
+//					   		timerWaitus(10);
+//					   		while(timer_flag!=1);
+//					   		temp=i2c_read(read_buf,2);
+//					   		LOG_INFO("Temp is %f",temp);
+//					   		Sensor_disable();		//disables all the gpio pins
+//	}
 
 /* Function 	: get_event
  * Description  : It will store and clear the set bit and compare the bit with the flags to pass to event
  * */
 uint32_t get_event(){
-			uint32_t ret=0;
-			CORE_DECLARE_IRQ_STATE;
-			CORE_ENTER_CRITICAL();
+	CORE_DECLARE_IRQ_STATE;
 
-			// you to select 1 event to return and clear that bit
-			if (event_flag & timer_UF_flag) {
 
-			    ret        =              timer_UF_flag;
-			    event_flag = event_flag ^ timer_UF_flag; // clear the bit
 
-			} else if (event_flag & timer_comp1_flag) {
+	CORE_ENTER_CRITICAL();
 
-				ret        =              timer_comp1_flag;
-				event_flag = event_flag ^ timer_comp1_flag; // clear the bit
+	if (lux_event & LUX_POWER_OFF) {
+		lux_event = lux_event ^ LUX_POWER_OFF; // clear event, needs to be read-modify-write
+		CORE_EXIT_CRITICAL();
+		return (LUX_POWER_OFF);
+	} else
 
-			} else if (event_flag & write_transfer_done) {
-
-				ret        =              write_transfer_done;
-				event_flag = event_flag ^ write_transfer_done; // clear the bit
-
-			} else if (event_flag & read_transfer_done) {
-
-				ret        =              read_transfer_done;
-				event_flag = event_flag ^ read_transfer_done; // clear the bit
-
-			} else {
-				ret = null;
-			}
-
+		if (lux_event & LUX_WAIT_FOR_POWER_UP) {
+			lux_event = lux_event ^ LUX_WAIT_FOR_POWER_UP; // clear event, needs to be read-modify-write
 			CORE_EXIT_CRITICAL();
+			return (LUX_WAIT_FOR_POWER_UP);
+		} else
 
-	return ret;
+			if (lux_event & LUX_LETIMER0_READ) {
+				lux_event = lux_event ^ LUX_LETIMER0_READ; // clear event, needs to be read-modify-write
+				CORE_EXIT_CRITICAL();
+				return (LUX_LETIMER0_READ);
+			} else
+
+				if (lux_event & LUX_LETIMER0_SENSOR_ENABLE) {
+					lux_event = lux_event ^ LUX_LETIMER0_SENSOR_ENABLE; // clear event, needs to be read-modify-write
+					CORE_EXIT_CRITICAL();
+					return (LUX_LETIMER0_SENSOR_ENABLE);
+				} else
+
+					if (lux_event & LUX_I2C_TRANSFER_DONE) {
+						lux_event = lux_event ^ LUX_I2C_TRANSFER_DONE; // clear event, needs to be read-modify-write
+						CORE_EXIT_CRITICAL();
+						return (LUX_I2C_TRANSFER_DONE);
+					} else
+
+						CORE_EXIT_CRITICAL();
+	return (0);
+
+
 }
 /* Function 	: temp_read_ble(float temp)
  * Description  :This function takes the result temp value calculated from the sensor and then converts
@@ -188,123 +202,99 @@ void lux_read_ble(float temp){
  * 	Ref:silicon labs soc temperature example
 */
 void state_machine(struct gecko_cmd_packet *evt) {
-	temp_states          current_state;
-	//DOS static temp_states   next_state=wait_for_power_up;
-	static temp_states   next_state=stateIdle; // DOS
+
 	uint16_t             ret;
 	if (BGLIB_MSG_ID(evt->header) != gecko_evt_system_external_signal_id) {
 			return;
 		}
-	current_state = next_state;
-	LOG_INFO("state is %d",current_state);
+
+	currentState = nextState;
+	//LOG_INFO("state is %d",current_state);
+	start_sm_flag=1;
 	if(start_sm_flag==1)
 	{
-	switch (current_state) {
-
-	                    case stateIdle:
-		                next_state=stateIdle;
-		                //LOG_INFO("ext signal=%ld\n",evt->data.evt_system_external_signal.extsignals);
-						if(evt->data.evt_system_external_signal.extsignals & timer_UF_flag)
-						{
-						 //evt=0;
-						LOG_INFO("state 0:idle state initiates sensor and power up\n");
-						  // start a measurement sequence: init I2C, power up 7021, wait 80ms
-						  I2C_init();
-					      Sensor_enable();
-					      timerWaitus(80000);
-						  next_state = wait_for_power_up;
-
-						}
-		               break;
-
-				   	    case wait_for_power_up:
-				   	    	next_state=wait_for_power_up;
-				   	        if(evt->data.evt_system_external_signal.extsignals & timer_comp1_flag) // times up
-				   		  	  {
-				   			//evt=0;
+		switch(currentState)
+		{
+		case STATE0_TIMER_WAIT:
+			nextState = STATE0_TIMER_WAIT; // default
+			if ((evt->data.evt_system_external_signal.extsignals & LUX_WAIT_FOR_POWER_UP)!=0 )
+			{
 #ifdef DEBUG
-				   			LOG_INFO("1.IN wait_for_power_up state \n\r");
-#endif
-				   			LOG_INFO("1");
-				   			// initiate an I2C transfer to send F3 command to 7021
-				   			// block sleep to EM2
-				   			SLEEP_SleepBlockBegin(sleepEM2);
-				   			ret=i2c_write_interrupt();
-				   			next_state = wait_for_i2c_write_complete;
-				   		  	  }
-
-				   		break;
-
-
-				   	    case wait_for_i2c_write_complete:
-				   	    	next_state=wait_for_i2c_write_complete;
-				   		  //DOS if(evt==timer_comp1_flag)
-				   	     //LOG_INFO("ext signal=%ld\n",evt->data.evt_system_external_signal.extsignals);
-				   	      if(evt->data.evt_system_external_signal.extsignals & write_transfer_done)
-				   		  {
-				   			  //evt=0;
-#ifdef DEBUG
-				   			LOG_INFO("2.IN wait_for_i2c_write_complete state \n\r");
-#endif
-				   			  	  //timer_flag=0;
-
-				   			LOG_INFO("2");
-				   			  SLEEP_SleepBlockEnd(sleepEM2); // end sleep block
-				   			  // now wait 10.8 ms for 7021 to take the measurement
-				   			 timerWaitus(10800);
-				   			 next_state=wait_for_i2c_read_start;
-				   		  	  }
-				   		break;
-
-
-
-				   	    case wait_for_i2c_read_start:
-				   	    	next_state=wait_for_i2c_read_start;
-				   	     //LOG_INFO("ext signal=%ld\n",evt->data.evt_system_external_signal.extsignals);
-				   		if(evt->data.evt_system_external_signal.extsignals & timer_comp1_flag) // times up
-				   			{
-				   			//evt=0;
-#ifdef DEBUG
-				   				LOG_INFO("3.IN wait_for_i2c_read_start \n\r");
+				LOG_INFO("0");
 #endif
 
-				   				LOG_INFO("3");
-				   				//NVIC_DisableIRQ(I2C0_IRQn);
-								//SLEEP_SleepBlockEnd(sleepEM2);
-								//timerWaitus(10000);
-
-				   				// initiate an I2C transfer to read the temp measurement from the 7021
-				   				// block sleep to EM2
-				   				SLEEP_SleepBlockBegin(sleepEM2);
-				   				ret=i2c_read_interrupt();
-				   				next_state=wait_for_i2c_read_complete;
-				   		    }
-				   		break;
+				gpioSensorSetOn();
+				timerWaitus(50000);
+				nextState = STATE_1_ENABLE_SENSOR;
 
 
+			}
 
-				   	    case wait_for_i2c_read_complete:
-				   	    	next_state=wait_for_i2c_read_complete;
-				   	     //LOG_INFO("ext signal=%ld\n",evt->data.evt_system_external_signal.extsignals);
-				   		if(evt->data.evt_system_external_signal.extsignals & read_transfer_done)
-				   			{
-				   			//evt=0;
+			break;
+
+		case STATE_1_ENABLE_SENSOR:
+			nextState = STATE_1_ENABLE_SENSOR;
+
+
+			if ((evt->data.evt_system_external_signal.extsignals & LUX_LETIMER0_SENSOR_ENABLE)!=0 )
+			{
 #ifdef DEBUG
-				   			LOG_INFO("4.In wait for i2c read complete state \n\r");
+				LOG_INFO("1");
+
 #endif
-				   			LOG_INFO("4");
-				   			SLEEP_SleepBlockEnd(sleepEM2);
-				   			temp=temp_calc();
-							LOG_INFO("Temp=%f",temp);
+				sensor_enable=1;
+				i2c_write_command(TSL2561_REG_CONTROL,0x03);
+				timerWaitus(380000);
+				nextState=STATE2_READ_ADC;
+			}
 
-							temp_read_ble(temp);
-							//Sensor_disable();
-							NVIC_DisableIRQ(I2C0_IRQn);
-							next_state=stateIdle;
+			break;
 
-				   			}
-				   		break;
-	     } // switch
+		case STATE2_READ_ADC:
+			nextState = STATE2_READ_ADC; // default
+
+
+			if ((evt->data.evt_system_external_signal.extsignals & LUX_LETIMER0_READ)!=0 )
+			{
+#ifdef DEBUG
+				LOG_INFO("2");
+#endif
+				for (int i = 0; i < 1750000; ) {
+						  i=i+1;
+					}
+				get_ADC_Channel_values(&channel1,&channel0);
+				nextState = STATE3_REPORT;
+
+			}
+
+			break;
+
+		case STATE3_REPORT:
+			nextState = STATE3_REPORT; // default
+			if ((evt->data.evt_system_external_signal.extsignals & LUX_I2C_TRANSFER_DONE)!=0 )
+			{
+#ifdef DEBUG
+				LOG_INFO("3");
+#endif
+
+				calculate_Lux(channel1,channel0,&lux);
+				lux2=(int)lux;
+				displayPrintf(DISPLAY_ROW_TEMPVALUE,"Luminosity=%d",lux2);
+				LOG_INFO("Luminosity: %d",lux2);
+				//LOG_INFO("lux: %f",lux);
+
+				i2c_write_command(TSL2561_REG_CONTROL,0x00); //power down sensor
+				sensor_enable=0;
+				gpioSensorSetOff(); //turn sensor off
+				nextState=STATE0_TIMER_WAIT;
+
+
+			}
+
+			break;
+
+
+		} // switch
 	}//extra credit
 }
 

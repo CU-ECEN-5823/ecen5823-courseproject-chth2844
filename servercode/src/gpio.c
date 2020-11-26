@@ -17,6 +17,8 @@
 #define LED1_pin  5
 #define ExtComin_port gpioPortD
 #define ExtComin_pin  13
+#define LUX_pin 7
+#define LUX_port gpioPortC
 
 void gpioInit()
 {
@@ -29,6 +31,7 @@ void gpioInit()
 	 GPIO_PinModeSet(LED1_port, LED1_pin, gpioModePushPull, false);
 
 	 GPIO_PinModeSet(RELAY_port, RELAY_pin, gpioModePushPull,false);
+	 GPIO_PinModeSet(LUX_port,LUX_pin, gpioModePushPull, false);
 }
 
 void gpioLed0SetOn()
@@ -65,3 +68,16 @@ void gpioSetDisplayExtcomin(bool flag)
 		GPIO_PinOutClear(ExtComin_port, ExtComin_pin);
 	}
 }
+
+void gpioSensorSetOn()
+{
+	GPIO_PinOutSet(LUX_port,LUX_pin);
+
+
+}
+
+void gpioSensorSetOff()
+{
+	GPIO_PinOutClear(LUX_port,LUX_pin);
+}
+

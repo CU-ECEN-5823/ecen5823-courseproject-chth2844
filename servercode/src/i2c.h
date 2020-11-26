@@ -13,27 +13,32 @@
 #include "i2cspm.h"
 #include "timer.h"
 #include "main.h"
-#define SEN_port gpioPortD
-#define SEN_pin 15
-#define SCL_pin	10
-#define SDA_pin	11
 
-bool write,read;
-//initialize i2c structure
-void I2C_init();
+#define TSL2561_ADDR   0x39 // default address
 
-//write command to the i2c
-void i2c_write(uint8_t *data, uint8_t len);
-uint16_t i2c_write_interrupt();
-//read data from i2c sensor and convert value to degree celsius
-float i2c_read(uint8_t *data, uint8_t len);
-uint16_t i2c_read_interrupt();
-//enable sensor at PD 15 for load power management
-void Sensor_enable();
+// TSL2561 registers
 
-//disable sensor for load power management at PD15
-void Sensor_disable();
+#define TSL2561_CMD           0x80
+#define TSL2561_CMD_CLEAR     0xC0
+#define	TSL2561_REG_CONTROL   0x00
+#define	TSL2561_REG_TIMING    0x01
+#define	TSL2561_REG_THRESH_L  0x02
+#define	TSL2561_REG_THRESH_H  0x04
+#define	TSL2561_REG_INTCTL    0x06
+#define	TSL2561_REG_ID        0x0A
+#define	TSL2561_REG_DATA_0    0x0C
+#define	TSL2561_REG_DATA_1    0x0E
 
 
-float temp_calc();
+//Function Prototypes
+void InitI2C();
+void writeI2C();
+void readI2C();
+void CalculateTemperature();
+void i2c_write_command(uint8_t command,uint8_t opcode);
+void get_ADC_Channel_values(double* ch1,double* ch0);
+void calculate_Lux(double ch1,double ch0,double* result);
+
+
+
 #endif /* SRC_I2C_H_ */

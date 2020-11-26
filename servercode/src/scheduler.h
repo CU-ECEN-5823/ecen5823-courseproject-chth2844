@@ -43,23 +43,45 @@
 #include "infrastructure.h"
 #include "native_gecko.h"
 
-typedef enum {
-	stateIdle = 0,						//initial state
-	wait_for_power_up = 1,				//sensor enable and i2c initialization with wait for stabilization time 80ms
-	wait_for_i2c_write_complete = 2,	//if stablization time complete then enters this state to write to i2c
-	wait_for_i2c_read_start = 3,		//if write is complete then this state starts 10 ms wait
-	wait_for_i2c_read_complete = 4,		//if wait time complete then reads from i2c
-} temp_states;
+//typedef enum {
+//	stateIdle = 0,						//initial state
+//	wait_for_power_up = 1,				//sensor enable and i2c initialization with wait for stabilization time 80ms
+//	wait_for_i2c_write_complete = 2,	//if stablization time complete then enters this state to write to i2c
+//	wait_for_i2c_read_start = 3,		//if write is complete then this state starts 10 ms wait
+//	wait_for_i2c_read_complete = 4,		//if wait time complete then reads from i2c
+//} temp_states;
+//
+//typedef enum uint32_t{
+//	null=0,
+//	timer_UF_flag=1,
+//	timer_comp1_flag=2,
+//	write_transfer_done=4,  // DOS define these as a single bit so we can set and clear individual bits
+//	read_transfer_done=8,
+//}temp_events;
+//
+//temp_events event;
 
-typedef enum uint32_t{
-	null=0,
-	timer_UF_flag=1,
-	timer_comp1_flag=2,
-	write_transfer_done=4,  // DOS define these as a single bit so we can set and clear individual bits
-	read_transfer_done=8,
-}temp_events;
+typedef enum State
+{
+	STATE0_TIMER_WAIT,
+	STATE_1_ENABLE_SENSOR,
+	STATE2_READ_ADC,
+	STATE3_REPORT
+} State_t;
 
-temp_events event;
+
+
+typedef enum uint32_t
+{
+	LUX_POWER_OFF                      = 0x01,
+	LUX_WAIT_FOR_POWER_UP              = 0x02,
+	LUX_LETIMER0_SENSOR_ENABLE                 = 0x04,
+	LUX_LETIMER0_READ                          = 0x08,
+	LUX_I2C_TRANSFER_DONE              = 0x10
+
+
+} Lux_Event_t;
+
 uint32_t event_flag;
 
 void schedulerSetEvent();

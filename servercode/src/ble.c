@@ -70,6 +70,7 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 		//extra credit-flag set to start state machine only after connection done.
 		//start_sm_flag=1;
 		conn_done=1;
+		start_sm_flag=1; //cst
 		LOG_INFO("evt_le connection\n");
 		//display on lcd "connected" when connection established with connect app
 		displayPrintf(DISPLAY_ROW_CONNECTION,"connected");
@@ -171,7 +172,7 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 			if(conn_done==1){
 			if(toggle==1){
 				GPIO_PinOutSet(RELAY_port,RELAY_pin);
-				displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
+				//displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
 				int op=GPIO_PinInGet(RELAY_port,RELAY_pin);
 				LOG_INFO("here set-op is %d\n",op);
 				toggle=0;
@@ -182,7 +183,7 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 			}
 			else{
 				GPIO_PinOutClear(RELAY_port,RELAY_pin);
-				displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
+				//displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
 				int op2=GPIO_PinInGet(RELAY_port,RELAY_pin);
 				LOG_INFO("here clear is %d\n",op2);
 				toggle=1;

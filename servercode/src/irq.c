@@ -27,109 +27,89 @@
  */
 
 #include "src/irq.h"
+#include "timer.h"
 
-/*Function:LETIMER0_IRQHANDLER
- * Description:When interrupt occurs on letimer0 this function is serviced.
- * 				In this function,we call scheduler function in critical section as there is change in global variable.
+extern I2C_TransferReturn_TypeDef transferstatus;
+
+int rollover;
+extern uint8_t sensor_enable;
+uint32_t timestamp;
+
+/* Function Name: void LETIMER0_IRQHandler()
  *
- * **/
-
-uint32_t      myMilliseconds = 0; // DOS
-
+ * Description: Interrupt Handler for LETIMER0 peripheral. Schedules Temperature Measure  event  every 3s.
+ *
+ * Parameters: None
+ *
+ * Silab API's used:void LETIMER_IntClear(LETIMER_TypeDef *letimer, uint32_t flags),
+ *                  uint32_t LETIMER_IntGet(LETIMER_TypeDef *letimer)
+ *
+ * Returns:None
+ *
+ */
 void LETIMER0_IRQHandler()
 {
+	uint32_t reason =  LETIMER_IntGet(LETIMER0); //determine pending interrupts
+	//static int counter=0;
+	LETIMER_IntClear(LETIMER0,reason);
+
 	CORE_DECLARE_IRQ_STATE;
 
-	uint32_t    flag;
+	// DOS
+	//if(reason==(LETIMER_IF_COMP0|LETIMER_IF_UF|LETIMER_IF_COMP1))//3s Interval Interrupt
+	if (reason & LETIMER_IF_COMP0)
+	{
 
-		 flag = LETIMER_IntGet(LETIMER0);  // get IF bits, IF bits are often = 0x07 -> UF, COMP1 and COMP0
-		 LETIMER_IntClear(LETIMER0, flag); // punch down all IF bits in LETIMER0
+		rollover++;
 
-		 // DOS
-		 // Your bug was not punching down COMP0 IF bit. You had calls to IntClear for UF and COMP1, but COMP0
-		 // remained set. This caused an immediate return from interrupt when you called SLEEP_Sleep(), this
-		 // is why it appeared you were in EM0 for 90ms
+		CORE_ENTER_CRITICAL();
+		schedulerSetEvent(LUX_WAIT_FOR_POWER_UP);
+		CORE_EXIT_CRITICAL();
+
+		uint32_t count = (rollover*comp0)-LETIMER_CounterGet (LETIMER0); //Get timer count
+
+		timestamp=(count*1000)/actual_clk_freq; //Return Timestamp in ms
+	}
 
 
+	if (reason & LETIMER_IF_COMP1)
+	{
 
-		 CORE_ENTER_CRITICAL();
-
-		 if (flag & LETIMER_IF_UF)
+		CORE_ENTER_CRITICAL();
+		if(sensor_enable==1)
 		{
+			schedulerSetEvent(LUX_LETIMER0_READ);
 
-			 myMilliseconds += 3000; // DOS should probably have a #define value to replace 3000
+		}
 
-			 //DOS LOG_WARN("******Irq handler UF*******\n\r");
-#ifdef DEBUG
-			 LOG_INFO("*UF"); // way fewer chars to transfer: faster
-#endif
+		else{
 
-		 	 //CORE_ENTER_CRITICAL();
-			 schedulerSetEvent(timer_UF_flag);
-		 	 //CORE_EXIT_CRITICAL();
+			schedulerSetEvent(LUX_LETIMER0_SENSOR_ENABLE);
 
-		 	 roll_over=roll_over+1;
-		 }
+		}
+		CORE_EXIT_CRITICAL();
 
-		 //DOS*********  else if (flag & LETIMER_IF_COMP1)
-	     if (flag & LETIMER_IF_COMP1)
 
-		 {
 
-			 //DOS LOG_WARN("******Irq handler COMP1*******\n\r");
-#ifdef DEBUG
-			 LOG_INFO("*COMP1"); // way fewer chars to transfer: faster
-#endif
+		LETIMER_IntDisable(LETIMER0,LETIMER_IF_COMP1);
 
-		 	 //CORE_ENTER_CRITICAL();
-		 	 schedulerSetEvent(timer_comp1_flag);
-		 	 timer_flag=1;
-		 	 //CORE_EXIT_CRITICAL();
 
-		 	LETIMER_IntDisable(LETIMER0, LETIMER_IEN_COMP1);
-
-		 }
-
-	     CORE_EXIT_CRITICAL();
-
-} // LETIMER0_IRQHandler()
-
-uint32_t getMyMilliseconds() {
-	return (myMilliseconds);
-} // getMyMilliseconds()
+	}
+}//LETIMER0_IRQHandler()
 
 void I2C0_IRQHandler(void){
 
-	 CORE_DECLARE_IRQ_STATE;
-	 uint16_t transferStatus;
-	 uint16_t flag=I2C0->IF & I2C0->IEN;
+	CORE_DECLARE_IRQ_STATE;
+	transferstatus=I2C_Transfer(I2C0); //shepherds the transfer
+	// LOG_INFO("Transfer Value %d, Transfer Status %d\n",transfer,transferstatus);
 
-	 // get the IRQ flags and'ed with what's enabled,
-	 // see why we got here
 
-	 //DOS LOG_WARN("******I2C handler*******\n\r");
-#ifdef DEBUG
-	 LOG_WARN("I2C"); // way less chars to send
-#endif
+	if (transferstatus==i2cTransferDone) {
+		CORE_ENTER_CRITICAL();
+		schedulerSetEvent(LUX_I2C_TRANSFER_DONE);
+		CORE_EXIT_CRITICAL();
+	}
 
-	 transferStatus = I2C_Transfer(I2C0);
-	 if (transferStatus==i2cTransferDone) {
-
-	     CORE_ENTER_CRITICAL();
-
-	     if (read==1) {
-	         schedulerSetEvent(read_transfer_done);
-	         read=0;
-	     }
-	     else if (write==1) {
-		     schedulerSetEvent(write_transfer_done);
-		     write=0;
-		     // LOG_WARN("WRITE SUCCESSFUL\n");
-	     }
-
-	     CORE_EXIT_CRITICAL();
-
-	 } // if
 
 } // I2C0_IRQHandler()
 
