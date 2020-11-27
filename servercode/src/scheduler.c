@@ -239,7 +239,7 @@ void state_machine(struct gecko_cmd_packet *evt) {
 
 	currentState = nextState;
 	//LOG_INFO("state is %d",current_state);
-	start_sm_flag=1;
+
 	if(start_sm_flag==1)
 	{
 		switch(currentState)
@@ -271,6 +271,7 @@ void state_machine(struct gecko_cmd_packet *evt) {
 				LOG_INFO("1");
 
 #endif
+				InitI2C();      //Initialize I2C peripheral
 				sensor_enable=1;
 				i2c_write_command(TSL2561_REG_CONTROL,0x03);
 				timerWaitus(420000);
@@ -291,6 +292,7 @@ void state_machine(struct gecko_cmd_packet *evt) {
 //				for (int i = 0; i < 1750000; ) {
 //						  i=i+1;
 //					}
+				SLEEP_SleepBlockBegin(sleepEM2);
 				get_ADC_Channel_values(&channel1,&channel0);
 				nextState = STATE3_REPORT;
 
@@ -305,17 +307,18 @@ void state_machine(struct gecko_cmd_packet *evt) {
 #ifdef DEBUG
 				LOG_INFO("3");
 #endif
-
-				calculate_Lux(channel1,channel0,&lux);
+				SLEEP_SleepBlockEnd(sleepEM2);
+				calculate_Lux(channel1,channel0,&lux); //calculate luminosity value
 				lux2=(uint32_t)lux;
-				displayPrintf(DISPLAY_ROW_TEMPVALUE,"Luminosity=%d",lux2);
+				displayPrintf(DISPLAY_ROW_TEMPVALUE,"Luminosity=%d",lux2); //display luminosity
 				lux_read_ble(lux2); //Display and Send BLE Value
 				switch_relay_state(lux2); //control relay state
 
 
-               i2c_write_command(TSL2561_REG_CONTROL,0x00); //power down sensor
+                i2c_write_command(TSL2561_REG_CONTROL,0x00); //power down sensor
 				sensor_enable=0; //sensor disabled
 				gpioSensorSetOff(); //turn sensor off
+				DisableI2C(); //Disable i2c clock and gpio pins
 				nextState=STATE0_TIMER_WAIT;
 
 

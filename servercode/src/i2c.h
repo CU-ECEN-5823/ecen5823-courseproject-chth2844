@@ -14,6 +14,12 @@
 #include "timer.h"
 #include "main.h"
 
+//I2C GPIO Ports
+#define I2C0_SCL_PORT gpioPortC
+#define I2C0_SCL_PIN  10
+#define I2C0_SDA_PORT gpioPortC
+#define I2C0_SDA_PIN  11
+
 #define TSL2561_ADDR   0x39 // default address
 
 // TSL2561 registers
@@ -38,7 +44,7 @@ void CalculateTemperature();
 void i2c_write_command(uint8_t command,uint8_t opcode);
 void get_ADC_Channel_values(double* ch1,double* ch0);
 void calculate_Lux(double ch1,double ch0,double* result);
-
+void DisableI2C();
 
 
 #endif /* SRC_I2C_H_ */

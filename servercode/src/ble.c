@@ -167,32 +167,6 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 		break;
 
 		case gecko_evt_system_external_signal_id:
-			//for now checking external signal after every 3 sec using letimer
-//			LOG_INFO("external_system_signal_id reached\n");
-//			if(conn_done==1){
-//			if(toggle==1){
-//				GPIO_PinOutSet(RELAY_port,RELAY_pin);
-//				//displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
-//				int op=GPIO_PinInGet(RELAY_port,RELAY_pin);
-//				LOG_INFO("here set-op is %d\n",op);
-//				toggle=0;
-//				BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op));
-//				if (bool_relay_flag==1){
-//					BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op));
-//					}
-//			}
-//			else{
-//				GPIO_PinOutClear(RELAY_port,RELAY_pin);
-//				//displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
-//				int op2=GPIO_PinInGet(RELAY_port,RELAY_pin);
-//				LOG_INFO("here clear is %d\n",op2);
-//				toggle=1;
-//				BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op2));
-//				if (bool_relay_flag==1){
-//					BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op2));
-//				}
-//			}
-//			}
 
 
 		break;
@@ -207,6 +181,7 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 			//after disconnecting,it will show on lcd "advertising"
 			displayPrintf(DISPLAY_ROW_CONNECTION,"Advertising");
 			displayPrintf(DISPLAY_ROW_ACTION," ");
+			displayPrintf(DISPLAY_ROW_TEMPVALUE," ");
 			/*halt the system*/
 			gecko_cmd_system_halt(1);
 			/*set transmit power to 0*/
