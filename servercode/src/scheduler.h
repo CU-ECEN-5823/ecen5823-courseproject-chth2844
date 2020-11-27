@@ -46,6 +46,17 @@
 //defines
 #define LUX_THRESHOLD  3
 
+<<<<<<< HEAD
+typedef enum uint32_t{
+	null=0,
+	timer_UF_flag=1,
+	timer_comp1_flag=2,
+	write_transfer_done=4,  // DOS define these as a single bit so we can set and clear individual bits
+	read_transfer_done=8,
+	PB0_pressed,
+	PB0_released,
+}temp_events;
+=======
 //typedef enum {
 //	stateIdle = 0,						//initial state
 //	wait_for_power_up = 1,				//sensor enable and i2c initialization with wait for stabilization time 80ms
@@ -84,6 +95,7 @@ typedef enum uint32_t
 
 
 } Lux_Event_t;
+>>>>>>> 7e527de88f2cf4f193e365e62621d77287c34bdc
 
 uint32_t event_flag;
 

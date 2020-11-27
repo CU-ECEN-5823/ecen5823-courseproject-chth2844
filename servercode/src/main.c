@@ -65,34 +65,7 @@ void SysTick_Handler(void) {
 #endif
 uint8_t bluetooth_stack_heap[DEFAULT_BLUETOOTH_HEAP(MAX_CONNECTIONS)];
 
-static const gecko_configuration_t config ={
-  .config_flags = 0,
-#if defined(FEATURE_LFXO) || defined(PLFRCO_PRESENT)
-  .sleep.flags = SLEEP_FLAGS_DEEP_SLEEP_ENABLE,
-#else
-  .sleep.flags = 0,
-#endif
-  .bluetooth.max_connections = MAX_CONNECTIONS,
-  .bluetooth.heap = bluetooth_stack_heap,
-  .bluetooth.heap_size = sizeof(bluetooth_stack_heap),
-#if defined(FEATURE_LFXO)
-  .bluetooth.sleep_clock_accuracy = 100, // ppm
-#elif defined(PLFRCO_PRESENT)
-  .bluetooth.sleep_clock_accuracy = 500, // ppm
-#endif
-  .gattdb = &bg_gattdb_data,
-  .ota.flags = 0,
-  .ota.device_name_len = 3,
-  .ota.device_name_ptr = "OTA",
-  .pa.config_enable = 1, // Set this to be a valid PA config
-#if defined(FEATURE_PA_INPUT_FROM_VBAT)
-  .pa.input = GECKO_RADIO_PA_INPUT_VBAT, // Configure PA input to VBAT
-#else
-  .pa.input = GECKO_RADIO_PA_INPUT_DCDC,
-#endif // defined(FEATURE_PA_INPUT_FROM_VBAT)
-  .rf.flags = GECKO_RF_CONFIG_ANTENNA,                 /* Enable antenna configuration. */
-  .rf.antenna = GECKO_RF_ANTENNA,                      /* Select antenna path! */
-};
+
 
 
 int appMain(gecko_configuration_t *config)

@@ -179,6 +179,26 @@ void switch_relay_state(uint32_t lum)
 	     }
 	}
 
+<<<<<<< HEAD
+		//typecast to int
+		uint8_t lux_int=(uint8_t)temp;
+		/* Convert flags to bitstream and append them in the HTM temperature data buffer (htmTempBuffer) */
+		UINT8_TO_BITSTREAM(p,0);
+		//LOG_INFO("uint8 to bitstream done\n");
+		/* Convert sensor data to correct temperature format */
+		//temperature = FLT_TO_UINT32(temp*1000, -3);
+		//displayPrintf(DISPLAY_ROW_TEMPVALUE,temperature);
+		/* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
+		UINT32_TO_BITSTREAM(p, temperature);
+		/* Send indication of the temperature in htmTempBuffer to all "listening" clients.
+		* This enables the Health Thermometer in the Blue Gecko app to display the temperature.
+		*  0xFF as connection ID will send indications to all connections. */
+		//if the indicate is set,then it will send the notification and bitstream.
+		displayPrintf(DISPLAY_ROW_TEMPVALUE,"Temp:%f",temp);
+		if(bool_sensor_flag==1)
+		{
+				BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF, gattdb_sensor_reading, 5, htmTempBuffer));
+=======
 	//luminosity is greater than threshold value switch off relay
 	else{
 
@@ -188,6 +208,7 @@ void switch_relay_state(uint32_t lum)
 		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op2));
 	    if (bool_relay_flag==1){
 		   BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op2));
+>>>>>>> 7e527de88f2cf4f193e365e62621d77287c34bdc
 		}
 
 

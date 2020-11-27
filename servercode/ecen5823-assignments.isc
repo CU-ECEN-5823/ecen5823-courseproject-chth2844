@@ -49,7 +49,7 @@ appPlugin: stack_bridge=false
       <description>sensor_reading</description>
       <informativeText>Custom characteristic</informativeText>
       <value length="1" type="hex" variable_length="false">0x00</value>
-      <properties indicate="true" indicate_requirement="optional" read="true" read_requirement="optional"/>
+      <properties encrypted_read="true" encrypted_read_requirement="optional" indicate="true" indicate_requirement="optional"/>
     </characteristic>
   </service>
   <service advertise="false" id="Smart_switch" name="Device Information" requirement="mandatory" sourceId="org.bluetooth.service.device_information" type="primary" uuid="180A">
@@ -92,7 +92,7 @@ appPlugin: stack_bridge=false
       <description>relay_state</description>
       <informativeText>Custom characteristic</informativeText>
       <value length="1" type="hex" variable_length="false">0x00</value>
-      <properties indicate="true" indicate_requirement="optional" read="true" read_requirement="optional"/>
+      <properties encrypted_read="true" encrypted_read_requirement="optional" indicate="true" indicate_requirement="optional"/>
     </characteristic>
   </service>
 </gatt>
