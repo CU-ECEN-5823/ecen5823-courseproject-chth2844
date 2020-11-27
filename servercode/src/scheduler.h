@@ -46,7 +46,6 @@
 //defines
 #define LUX_THRESHOLD  3
 
-<<<<<<< HEAD
 typedef enum uint32_t{
 	null=0,
 	timer_UF_flag=1,
@@ -56,7 +55,7 @@ typedef enum uint32_t{
 	PB0_pressed,
 	PB0_released,
 }temp_events;
-=======
+
 //typedef enum {
 //	stateIdle = 0,						//initial state
 //	wait_for_power_up = 1,				//sensor enable and i2c initialization with wait for stabilization time 80ms
@@ -83,19 +82,15 @@ typedef enum State
 	STATE3_REPORT
 } State_t;
 
-
-
-typedef enum uint32_t
+typedef enum lux_event
 {
 	LUX_POWER_OFF                      = 0x01,
 	LUX_WAIT_FOR_POWER_UP              = 0x02,
 	LUX_LETIMER0_SENSOR_ENABLE                 = 0x04,
 	LUX_LETIMER0_READ                          = 0x08,
 	LUX_I2C_TRANSFER_DONE              = 0x10
-
-
 } Lux_Event_t;
->>>>>>> 7e527de88f2cf4f193e365e62621d77287c34bdc
+
 
 uint32_t event_flag;
 
