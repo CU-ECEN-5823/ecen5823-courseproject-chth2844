@@ -70,7 +70,7 @@ uint8_t bluetooth_stack_heap[DEFAULT_BLUETOOTH_HEAP(MAX_CONNECTIONS)];
 
 int appMain(gecko_configuration_t *config)
 {
-
+	SLEEP_Init_t         sleepInitExData;
 	gecko_init(config);
 	gpioInit();				//Initialize the GPIO
 	CMU_init();				//Initialize the CLOCK
@@ -78,10 +78,13 @@ int appMain(gecko_configuration_t *config)
 	InitI2C();      //Initialize I2C peripheral
 //	logInit();				//Initialize the Log Init function
 	//sleep function
-	const SLEEP_EnergyMode_t sleep_mode_blocked=sleepEM3;	//ble works in em mode 2
-	SLEEP_Init_t init_val={0};
-	SLEEP_InitEx(&init_val);
-	SLEEP_SleepBlockBegin(sleep_mode_blocked);
+//	const SLEEP_EnergyMode_t sleep_mode_blocked=sleepEM3;	//ble works in em mode 2
+//	SLEEP_Init_t init_val={0};
+//	SLEEP_InitEx(&init_val);
+//	SLEEP_SleepBlockBegin(sleep_mode_blocked);
+	memset (&sleepInitExData, 0, sizeof(sleepInitExData));
+    SLEEP_InitEx(&sleepInitExData);
+	SLEEP_SleepBlockBegin(sleepEM3);
 	displayInit();
  /*This while loop checks for the gecko_events_pending function that is updated
   * when the interrupt occurs every 3 secs by the gecko_event_external().

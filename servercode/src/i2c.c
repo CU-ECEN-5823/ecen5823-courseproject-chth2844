@@ -46,7 +46,9 @@ int transfer;
  */
 void InitI2C()
 {
-
+CMU_ClockEnable (cmuClock_I2C0, true); // DOS
+GPIO_PinModeSet(I2C0_SCL_PORT, I2C0_SCL_PIN,gpioModeWiredAndPullUpFilter, 1);
+GPIO_PinModeSet(I2C0_SDA_PORT, I2C0_SDA_PIN,gpioModeWiredAndPullUpFilter, 1);
 I2CSPM_Init_TypeDef init;
 init.port= I2C0;                      /* Use I2C instance 0 */
 init.sclPort= gpioPortC;                  /* SCL port */
@@ -88,7 +90,25 @@ void writeI2C()
  }
 
 
-
+/*
+ * Function Name: void DisableI2C()
+ *
+ * Function Description: Disables I2c peripheral,gpio and clock
+ * .
+ * Parameters: None
+ *
+ * Returns: None
+ *
+ */
+void DisableI2C()
+{
+	NVIC_DisableIRQ(I2C0_IRQn);
+	I2C_Enable (I2C0, false);
+	GPIO_PinModeSet(I2C0_SCL_PORT, I2C0_SCL_PIN, gpioModeDisabled, 1);
+	GPIO_PinModeSet(I2C0_SDA_PORT, I2C0_SDA_PIN, gpioModeDisabled, 1);
+	//CMU_ClockEnable(cmuClock_HFPER,false);
+	CMU_ClockEnable (cmuClock_I2C0, false); // DOS
+}
 
 
 void i2c_write_command(uint8_t command,uint8_t opcode)

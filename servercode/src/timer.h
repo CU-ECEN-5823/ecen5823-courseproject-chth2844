@@ -39,7 +39,7 @@
 #include "log.h"
 #include <stdio.h>
 #include "irq.h"
-#define LETIMER_PERIOD_MS 3000
+#define LETIMER_PERIOD_MS 6000
 
 #define actual_clk_freq LFACLK_FREQ_HZ/LFACLK_PRESCALAR_DIVIDER_RATIO
 
