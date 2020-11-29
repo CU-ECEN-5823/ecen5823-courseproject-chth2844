@@ -208,8 +208,7 @@ void lux_read_ble(uint32_t lux)
     /* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
     UINT32_TO_BITSTREAM(p, lux);
 
-    gecko_cmd_gatt_server_send_characteristic_notification(
-    	    0xFF,gattdb_sensor_reading, 5, TempBuffer);
+    gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_sensor_reading, 5, TempBuffer);
 
 
 

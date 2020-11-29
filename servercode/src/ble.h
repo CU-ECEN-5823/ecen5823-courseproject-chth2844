@@ -79,8 +79,8 @@ typedef struct {
 typedef enum client_event
 {
 	clearevent=0,
-	characteristic=1,
-	service=2,
+	sensor_char=1,
+	sensor_service=2,
 	relay_char=3,
 	relay_service=4
 }Client_Evt;
