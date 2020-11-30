@@ -164,27 +164,38 @@ void temp_read_ble(float temp){
 
 void switch_relay_state(uint32_t lum)
 {
+	uint32_t op_state,op_state2;
+	uint8_t buffer_op[1];
+	uint8_t buffer_op2[1];
+	uint8_t *ptr_op=buffer_op;
+	uint8_t *ptr_op2=buffer_op2;
 	//luminosity is less than threshold value switch on relay
 	if(lum<LUX_THRESHOLD)
 	{
+
 		GPIO_PinOutSet(RELAY_port,RELAY_pin);
 	    displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
-	    int op=GPIO_PinInGet(RELAY_port,RELAY_pin);
-	    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op));
+	    uint8_t op=GPIO_PinInGet(RELAY_port,RELAY_pin);
+		LOG_INFO("relay on status with val %d************\n\r",op);
+		op_state=FLT_TO_UINT32(op,-3);
+		UINT32_TO_BITSTREAM(ptr_op,op_state);
+	    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,buffer_op));
 	    if (bool_relay_flag==1){
-	    	BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op));
+	    	BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,buffer_op));
 	     }
 	}
 
 
 	//luminosity is greater than threshold value switch off relay
 	else{
+
 		GPIO_PinOutClear(RELAY_port,RELAY_pin);
 		displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
-		int op2=GPIO_PinInGet(RELAY_port,RELAY_pin);
-		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op2));
+		uint8_t op2=GPIO_PinInGet(RELAY_port,RELAY_pin);
+		LOG_INFO("relay off status with val %d************\n\r",op2);
+		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,buffer_op2));
 	    if (bool_relay_flag==1){
-		   BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op2));
+		   BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,buffer_op2));
 		}
 
 
@@ -193,25 +204,23 @@ void switch_relay_state(uint32_t lum)
 
 void lux_read_ble(uint32_t lux)
 {
-	uint8_t TempBuffer[5]; /* Stores the temperature data in the Health Thermometer (HTM) format. */
-	uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no temperature type. */
-    uint8_t *p = TempBuffer; /* Pointer to HTM temperature buffer needed for converting values to bitstream. */
 
 
+	uint8_t lux_buffer[1];
+	//uint8_t flags = 0x00;
+	//uint32_t lux_val;
+    uint8_t *ptr =  lux_buffer;
+  //  UINT8_TO_BITSTREAM(p,0);
 
-    /* Convert flags to bitstream and append them in the HTM temperature data buffer */
-    UINT8_TO_BITSTREAM(p, flags);
 
-    /* Convert sensor data to correct temperature format */
-    lux=FLT_TO_UINT32(lux,0);
+//    lux_val=FLT_TO_UINT32(lux,0);
 
+	uint32_t lux_val;
+	 lux_val=FLT_TO_UINT32(lux,-3);
     /* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
-    UINT32_TO_BITSTREAM(p, lux);
+    UINT32_TO_BITSTREAM(ptr, lux_val);
 
-    gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_sensor_reading, 5, TempBuffer);
-
-
-
+    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_sensor_reading, 1, lux_buffer));
 
 
 }

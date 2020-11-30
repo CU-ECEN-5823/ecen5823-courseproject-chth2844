@@ -545,16 +545,13 @@ if(bonding_success==1){
 						displayPrintf(DISPLAY_ROW_TEMPVALUE,"Luminosity=%d",*sensor_ptr);
 						BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_characteristics(evt->data.evt_gatt_characteristic_value.connection,relay_service_handler));
 					}
-					else
-						//if(evt->data.evt_gatt_characteristic_value.characteristic == relay_char_handler)
+					//else
+						if(evt->data.evt_gatt_characteristic_value.characteristic == relay_char_handler)
 					  {
 							LOG_INFO("RELLLLLLLAAAAAAAYYYYYYYYYYYYY **********\n\r");
 						    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_send_characteristic_confirmation(evt->data.evt_gatt_characteristic_value.connection));
-						    //displayPrintf(DISPLAY_ROW_CONNECTION,"Handling Indications");
-						    //temperature = gattuint32tofloat(evt->data.evt_gatt_characteristic_value.value.data);
-						    //displayPrintf(DISPLAY_ROW_TEMPVALUE,"Temperature:%.2f",temperature);
 						    relay_ptr = evt->data.evt_gatt_characteristic_value.value.data;
-						    LOG_INFO("*******Relay State is %u*******\n\r", *relay_ptr);
+						    LOG_INFO("*******Relay State is %d*******\n\r", *relay_ptr);
 						 	if(*relay_ptr == 1)
 						 	{
 						 		displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
