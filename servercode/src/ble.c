@@ -304,14 +304,16 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 					// Set the default connection parameters for subsequent connections
 					BTSTACK_CHECK_RESPONSE(gecko_cmd_le_gap_set_conn_parameters(CONN_INTERVAL_MIN,CONN_INTERVAL_MAX,CONN_SLAVE_LATENCY,CONN_TIMEOUT));
 					//useful to delete all the bondings to trigger and test the pairing processes.
-					BTSTACK_CHECK_RESPONSE(gecko_cmd_sm_delete_bondings());
 					displayPrintf(DISPLAY_ROW_CONNECTION,"Discovering");
 					bonding_success=0;
 					passkey_flag=0;
-					//BTSTACK_CHECK_RESPONSE(gecko_cmd_sm_set_bondable_mode(1));
-					BTSTACK_CHECK_RESPONSE(gecko_cmd_sm_configure(0x0F, sm_io_capability_displayyesno));
-					// Start scanning
 					BTSTACK_CHECK_RESPONSE(gecko_cmd_le_gap_start_discovery(le_gap_phy_1m, le_gap_discover_generic));
+					//BTSTACK_CHECK_RESPONSE(gecko_cmd_sm_set_bondable_mode(1));
+					//BTSTACK_CHECK_RESPONSE(gecko_cmd_sm_configure(0x0F, sm_io_capability_displayyesno));
+					BTSTACK_CHECK_RESPONSE(gecko_cmd_sm_delete_bondings());
+					BTSTACK_CHECK_RESPONSE(gecko_cmd_sm_configure(7,1));
+					// Start scanning
+
 					connState = scanning;
 			    break;
 
@@ -335,6 +337,9 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 					displayPrintf(DISPLAY_ROW_CONNECTION,"Bonded");
 					displayPrintf(DISPLAY_ROW_PASSKEY," ");
 					displayPrintf(DISPLAY_ROW_ACTION," ");
+					BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_primary_services(evt->data.evt_gatt_procedure_completed.connection));
+					//BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_characteristics_by_uuid(evt->data.evt_gatt_procedure_completed.connection,relay_service_handler,16,relay_uuid));
+
 		        break;
 	//if failed
 				case gecko_evt_sm_bonding_failed_id:
@@ -376,7 +381,8 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 					//passing the opened connection paramter with length and data of thermometer service uuid
 					//BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_primary_services_by_uuid(cli_connection, 2,(const uint8_t*)thermoService));
 					//BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_primary_services(evt->data.evt_le_connection_opened.connection));
-					BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_primary_services(evt->data.evt_le_connection_opened.connection));
+					BTSTACK_CHECK_RESPONSE(gecko_cmd_sm_increase_security(cli_connection));
+					//BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_primary_services(evt->data.evt_le_connection_opened.connection));
 					//BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_primary_services_by_uuid(evt->data.evt_le_connection_opened.connection, 16,relay_uuid_service));
 					connState = discoverServices;
 				 break;
@@ -462,6 +468,7 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 										{
 											LOG_INFO("success-sensor char selected\n\r");
 											sensor_char_handler=evt->data.evt_gatt_characteristic.characteristic;
+											LOG_INFO("char value is %d",evt->data.evt_gatt_characteristic.characteristic);
 											completion_evt=sensor_char;
 										}
 										if(flag1_char>15)
@@ -479,7 +486,7 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 				case gecko_evt_gatt_procedure_completed_id:
 					LOG_INFO("in procedure complete event:evt->data.evt_gatt_procedure_completed.result=%x\n\r",evt->data.evt_gatt_procedure_completed.result);
 					//     BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_characteristics(evt->data.evt_gatt_procedure_completed.connection,sensor_service_handler));
-
+if(bonding_success==1){
 					if(completion_evt == sensor_service)
 			    	  {
 			    		  	  LOG_INFO("***********in service completion event----------sensor service\n\r");
@@ -491,18 +498,19 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 			    	  if(completion_evt == sensor_char)
 			    	  {
 			    		  	  LOG_INFO("in charactersitic completion event--------sensor char\n\r");
+
 			    		  	  BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_set_characteristic_notification(evt->data.evt_gatt_procedure_completed.connection,sensor_char_handler,gatt_indication));
 			    		  	  completion_evt = clearevent;
 
 			    	  }
 			    	  if(completion_evt == relay_char)
 			    	  {
-			    		  if(evt->data.evt_gatt_procedure_completed.result == 0)
-			    		 {
+
 			    			  LOG_INFO("in charactersitic completion event--------relay char\n\r");
+
 			    			  BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_set_characteristic_notification(evt->data.evt_gatt_procedure_completed.connection,relay_char_handler,gatt_indication));
 			    		 		completion_evt = clearevent;
-			    	  }
+
 			    	  }
 			    	  if(completion_evt == relay_service)
 			    	  {
@@ -510,23 +518,38 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 			    		     BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_characteristics_by_uuid(cli_connection, relay_service_handler,16,relay_uuid));
 			    		  	completion_evt = clearevent;
 			    	  }
+}
 			    	  //if encryption error occured then start the increase security bonding procedure
-			    	  if(evt->data.evt_gatt_procedure_completed.result==0x040F)
+			    	  /*if(passkey_flag==0)
 			    	  {
-			    		  LOG_INFO("increase security**********\n\r");
+			    		//  LOG_INFO("increase security**********\n\r");
 			    		  BTSTACK_CHECK_RESPONSE(gecko_cmd_sm_increase_security(cli_connection));
-			    	  }
+			    		  BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_characteristics_by_uuid(cli_connection, relay_service_handler,16,relay_uuid));
+			    	  }*/
 			    break;
 
 			    //this evt then is used to calculate the temperature and converting uint32 to float using gattuint32tofloat function
 			    //get rssi as well
 				case gecko_evt_gatt_characteristic_value_id:
 					LOG_INFO("IN CHAR VALUE ID*******************\n\r");
-
-					  if(evt->data.evt_gatt_characteristic_value.characteristic == relay_char_handler)
+					LOG_INFO("characterisitc received is %d\n\r",evt->data.evt_gatt_characteristic_value.characteristic);
+					if(evt->data.evt_gatt_characteristic_value.characteristic == sensor_char_handler)
+					{
+						 LOG_INFO("in sensor char value id **********\n\r");
+						 BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_send_characteristic_confirmation(evt->data.evt_gatt_characteristic_value.connection));
+						 //displayPrintf(DISPLAY_ROW_CONNECTION,"Handling Indications");
+						 //temperature = gattuint32tofloat(evt->data.evt_gatt_characteristic_value.value.data);
+						 //displayPrintf(DISPLAY_ROW_TEMPVALUE,"Temperature:%.2f",temperature);
+						 sensor_ptr = evt->data.evt_gatt_characteristic_value.value.data;
+						  LOG_INFO("*******sensor State is %d******\n\r", *sensor_ptr);
+						displayPrintf(DISPLAY_ROW_TEMPVALUE,"Luminosity=%d",*sensor_ptr);
+						BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_characteristics(evt->data.evt_gatt_characteristic_value.connection,relay_service_handler));
+					}
+					else
+						//if(evt->data.evt_gatt_characteristic_value.characteristic == relay_char_handler)
 					  {
-							LOG_INFO("in char value id **********\n\r");
-						    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_send_characteristic_confirmation(evt->data.evt_gatt_procedure_completed.connection));
+							LOG_INFO("RELLLLLLLAAAAAAAYYYYYYYYYYYYY **********\n\r");
+						    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_send_characteristic_confirmation(evt->data.evt_gatt_characteristic_value.connection));
 						    //displayPrintf(DISPLAY_ROW_CONNECTION,"Handling Indications");
 						    //temperature = gattuint32tofloat(evt->data.evt_gatt_characteristic_value.value.data);
 						    //displayPrintf(DISPLAY_ROW_TEMPVALUE,"Temperature:%.2f",temperature);
@@ -541,22 +564,12 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 						 		displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
 						    }
 						 //BTSTACK_CHECK_RESPONSE(gecko_cmd_le_connection_get_rssi(evt->data.evt_gatt_procedure_completed.connection));
-						  BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_characteristics_by_uuid(evt->data.evt_gatt_procedure_completed.connection,sensor_service_handler,16,sensor_uuid));
+						 BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_characteristics_by_uuid(evt->data.evt_gatt_characteristic_value.connection,sensor_service_handler,16,sensor_uuid));
 
 					  }
-					  if(evt->data.evt_gatt_characteristic_value.characteristic == sensor_char_handler)
-					  					  {
-					  							LOG_INFO("in sensor char value id **********\n\r");
-					  						    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_send_characteristic_confirmation(evt->data.evt_gatt_procedure_completed.connection));
-					  						    //displayPrintf(DISPLAY_ROW_CONNECTION,"Handling Indications");
-					  						    //temperature = gattuint32tofloat(evt->data.evt_gatt_characteristic_value.value.data);
-					  						    //displayPrintf(DISPLAY_ROW_TEMPVALUE,"Temperature:%.2f",temperature);
-					  						    sensor_ptr = evt->data.evt_gatt_characteristic_value.value.data;
-					  						    LOG_INFO("*******sensor State is %d******\n\r", *sensor_ptr);
-					  						    displayPrintf(DISPLAY_ROW_TEMPVALUE,"Luminosity=%d",*sensor_ptr);
-					  						  BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_discover_characteristics_by_uuid(evt->data.evt_gatt_procedure_completed.connection,relay_service_handler,16,relay_uuid));
-					  					  }
-					  BTSTACK_CHECK_RESPONSE(gecko_cmd_le_connection_get_rssi(evt->data.evt_gatt_procedure_completed.connection));
+
+					  //BTSTACK_CHECK_RESPONSE(gecko_cmd_le_connection_get_rssi(evt->data.evt_gatt_characteristic_value.connection));
+					  gecko_cmd_gatt_send_characteristic_confirmation(evt->data.evt_gatt_characteristic_value.connection);
 				break;
 
 				case gecko_evt_le_connection_rssi_id:
