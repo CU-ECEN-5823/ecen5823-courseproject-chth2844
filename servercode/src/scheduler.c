@@ -194,15 +194,16 @@ void switch_relay_state(uint32_t lum)
 	if(lum<LUX_THRESHOLD){
 	GPIO_PinOutSet(RELAY_port,RELAY_pin);
 	displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
+	op=1;
 	}
 	else
 	{
 		GPIO_PinOutClear(RELAY_port,RELAY_pin);
 		displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
+		op=0;
 	}
 
-	op = GPIO_PinInGet(PB0_port, PB0_pin);
-
+		//op = GPIO_PinInGet(PB0_port, PB0_pin);
 		LOG_INFO("relay Status = %d\n", op);
 		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op));
 		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op));
@@ -227,8 +228,6 @@ void lux_read_ble(uint32_t lux)
     UINT32_TO_BITSTREAM(ptr, lux_val);
 
     BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_sensor_reading, 1, lux_buffer));
-
-
 
 }
 /* Function 	:state_machine(struct gecko_cmd_packet *evt)
