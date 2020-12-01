@@ -90,6 +90,7 @@ typedef enum State_char
 	discover_serv1,
 	discover_char1,
 	notify_char1,
+	read_char1,
 	discover_serv2,
 	discover_char2,
 	notify_char2,

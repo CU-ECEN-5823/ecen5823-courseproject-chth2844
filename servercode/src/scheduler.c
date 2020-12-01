@@ -166,14 +166,9 @@ void temp_read_ble(float temp){
 
 void switch_relay_state(uint32_t lum)
 {
-	/*uint32_t op_state,op_state2;
-	uint8_t buffer_op[1];
-	uint8_t buffer_op2[1];
-	uint8_t *ptr_op=buffer_op;
-	uint8_t *ptr_op2=buffer_op2;*/
 
 	//luminosity is less than threshold value switch on relay
-	if(lum<LUX_THRESHOLD)
+/*	if(lum<LUX_THRESHOLD)
 	{
 		GPIO_PinOutSet(RELAY_port,RELAY_pin);
 	    displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
@@ -190,7 +185,27 @@ void switch_relay_state(uint32_t lum)
 		LOG_INFO("relay off status with val %d************\n\r",op2);
 
 		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op2));
+	}*/
+		uint32_t op_state;
+		uint8_t buffer_op;
+		uint8_t *ptr_op=buffer_op;
+
+
+	if(lum<LUX_THRESHOLD){
+	GPIO_PinOutSet(RELAY_port,RELAY_pin);
+	displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
 	}
+	else
+	{
+		GPIO_PinOutClear(RELAY_port,RELAY_pin);
+		displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
+	}
+
+	op = GPIO_PinInGet(PB0_port, PB0_pin);
+
+		LOG_INFO("relay Status = %d\n", op);
+		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op));
+		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op));
 }
 
 void lux_read_ble(uint32_t lux)
@@ -212,6 +227,8 @@ void lux_read_ble(uint32_t lux)
     UINT32_TO_BITSTREAM(ptr, lux_val);
 
     BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_sensor_reading, 1, lux_buffer));
+	struct gecko_msg_gatt_server_send_characteristic_notification_rsp_t* sensor_State=gecko_cmd_gatt_server_send_characteristic_notification(0xFF, gattdb_sensor_reading,1,lux_buffer);
+	LOG_INFO("Response result isssssssssssssssssss  LUXXXXX   --------------- %d ",sensor_State->result);
 
 
 }
