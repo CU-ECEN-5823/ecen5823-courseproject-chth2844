@@ -117,8 +117,9 @@ int appMain(gecko_configuration_t *config)
 		   evt = gecko_wait_event();	//check gecko ble events
 		   handle_ble_event(evt);		//handle the ble events
 		   state_machine(evt);			//temperature state machine to calculate the temp
-
-
+#if DEVICE_IS_BLE_SERVER==0
+		   char_event_sm(evt);
+#endif
 	  } // while(1)
 
 } // appMain()

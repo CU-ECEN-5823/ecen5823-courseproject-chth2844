@@ -84,11 +84,23 @@ typedef enum client_event
 	relay_char=3,
 	relay_service=4
 }Client_Evt;
+typedef enum State_char
+{
+
+	discover_serv1,
+	discover_char1,
+	notify_char1,
+	discover_serv2,
+	discover_char2,
+	notify_char2,
+	last_state,
+} State_char_t;
+
 
 Client_Evt completion_evt;
 
 uint8_t bluetooth_stack_heap[DEFAULT_BLUETOOTH_HEAP(MAX_CONNECTIONS)];
-
+void char_event_sm(struct gecko_cmd_packet *evt);
 static const gecko_configuration_t config ={
   .config_flags = 0,
 #if defined(FEATURE_LFXO) || defined(PLFRCO_PRESENT)
@@ -122,6 +134,8 @@ bool bool_flag;
 bool bool_relay_flag;
 bool bool_sensor_flag;		//for sensor reading indication
 uint8_t start_sm_flag;
+uint8_t cli_connection;
+
 void handle_ble_event(struct gecko_cmd_packet *evt);
 float gattuint32tofloat(const uint8_t *value_start_little_endian);
 uint8_t findIndexByConnectionHandle(uint8_t connection);			//ref:example code

@@ -82,6 +82,8 @@ typedef enum State
 	STATE3_REPORT
 } State_t;
 
+
+
 typedef enum lux_event
 {
 	LUX_POWER_OFF                      = 0x01,

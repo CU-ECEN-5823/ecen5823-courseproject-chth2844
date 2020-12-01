@@ -36,6 +36,8 @@
 Lux_Event_t         lux_event;
 State_t           currentState;
 State_t    nextState = STATE0_TIMER_WAIT;
+uint8_t op=0,op2=0;
+
 double lux;
 uint32_t lux2;
 double channel1;
@@ -164,41 +166,30 @@ void temp_read_ble(float temp){
 
 void switch_relay_state(uint32_t lum)
 {
-	uint32_t op_state,op_state2;
+	/*uint32_t op_state,op_state2;
 	uint8_t buffer_op[1];
 	uint8_t buffer_op2[1];
 	uint8_t *ptr_op=buffer_op;
-	uint8_t *ptr_op2=buffer_op2;
+	uint8_t *ptr_op2=buffer_op2;*/
+
 	//luminosity is less than threshold value switch on relay
 	if(lum<LUX_THRESHOLD)
 	{
-
 		GPIO_PinOutSet(RELAY_port,RELAY_pin);
 	    displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
-	    uint8_t op=GPIO_PinInGet(RELAY_port,RELAY_pin);
+	    op=GPIO_PinInGet(RELAY_port,RELAY_pin);
 		LOG_INFO("relay on status with val %d************\n\r",op);
-		op_state=FLT_TO_UINT32(op,-3);
-		UINT32_TO_BITSTREAM(ptr_op,op_state);
-	    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,buffer_op));
-	    if (bool_relay_flag==1){
-	    	BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,buffer_op));
-	     }
+
+		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op));
 	}
-
-
 	//luminosity is greater than threshold value switch off relay
 	else{
-
 		GPIO_PinOutClear(RELAY_port,RELAY_pin);
 		displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
-		uint8_t op2=GPIO_PinInGet(RELAY_port,RELAY_pin);
+		op2=GPIO_PinInGet(RELAY_port,RELAY_pin);
 		LOG_INFO("relay off status with val %d************\n\r",op2);
-		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,buffer_op2));
-	    if (bool_relay_flag==1){
-		   BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,buffer_op2));
-		}
 
-
+		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op2));
 	}
 }
 
@@ -335,6 +326,4 @@ void state_machine(struct gecko_cmd_packet *evt) {
 		} // switch
 	}//extra credit
 }
-
-
 

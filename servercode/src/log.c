@@ -30,11 +30,11 @@ uint32_t loggerGetTimestamp(void)
 {
 	//return timerGetRunTimeMilliseconds();
 	//return 0;
-    #ifdef MY_USE_SYSTICKS
-	   return getSysTicks();
-    #else
-	   return (timestamp);
-    #endif
+#ifdef USE_SYSTICKS
+	    return (sysTicks); // DOS
+#else
+		return ( getMyMilliseconds() ); // DOS
+#endif
 }
 
 /**
