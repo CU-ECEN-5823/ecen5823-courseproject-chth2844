@@ -502,7 +502,7 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 						    BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_send_characteristic_confirmation(evt->data.evt_gatt_procedure_completed.connection));
 						    relay_ptr = evt->data.evt_gatt_characteristic_value.value.data;
 						    LOG_INFO("*******Relay State is %d*******\n\r", *relay_ptr);
-						 	if(*relay_ptr == 1)
+						  if(*relay_ptr == 1)
 						 	{
 						 		displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
 						 	}
@@ -510,8 +510,6 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 						 	{
 						 		displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
 						    }
-
-
 					  }
 							BTSTACK_CHECK_RESPONSE(gecko_cmd_le_connection_get_rssi(evt->data.evt_gatt_characteristic_value.connection));
 

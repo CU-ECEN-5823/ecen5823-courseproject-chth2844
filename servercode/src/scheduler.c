@@ -227,8 +227,7 @@ void lux_read_ble(uint32_t lux)
     UINT32_TO_BITSTREAM(ptr, lux_val);
 
     BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_sensor_reading, 1, lux_buffer));
-	struct gecko_msg_gatt_server_send_characteristic_notification_rsp_t* sensor_State=gecko_cmd_gatt_server_send_characteristic_notification(0xFF, gattdb_sensor_reading,1,lux_buffer);
-	LOG_INFO("Response result isssssssssssssssssss  LUXXXXX   --------------- %d ",sensor_State->result);
+
 
 
 }
