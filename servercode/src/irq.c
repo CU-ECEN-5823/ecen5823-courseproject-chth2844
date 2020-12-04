@@ -3,7 +3,7 @@
  * @version   0.0.1
  *
  *
- * @author    Rucha Borwankar
+ * @author    Rucha Borwankar,chirayu thakur
  * @date
  *
  * @institution University of Colorado Boulder (UCB)

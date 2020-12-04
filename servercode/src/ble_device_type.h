@@ -2,7 +2,7 @@
  * ble_device_type.h
  *
  *  Created on: Feb 16, 2019
- *      Author: danwa
+ *      Author: Rucha and Chirayu
  */
 
 #ifndef SRC_BLE_DEVICE_TYPE_H_

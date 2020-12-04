@@ -3,14 +3,14 @@
  * @version   0.0.1
  * @brief     scheduler.c Function Implementations
  *
- * @author    Rucha Borwankar
+ * @author    Chirayu Thakur
  * @date     Oct 2, 2020
  *
  * @institution University of Colorado Boulder (UCB)
  * @course      ECEN 5823-001: IoT Embedded Firmware (Fall 2020)
  * @instructor  David Sluiter
  *
- * @assignment ecen5823-assignment5-ruchaborwankar
+ * @assignment ecen5823-assignment5-ruchaborwankar/chirayu
  * @due        Sep 18, 2020
  *
  * @resources  https://www.silabs.com/documents/public/reference-manuals/bluetooth-api-reference.pdf
@@ -68,30 +68,6 @@ bool events_present() {
 		return 0;
 }
 
-
-/* Function 	: process_event
- * Description  : When event occurs the process_event will then be used to
- * 				  get temperature readings from the sensor.
- * */
-//void process_event(){
-//		   uint8_t write_buf[1]={0xF3};
-//					   		uint8_t read_buf[2]={0,0};
-//					   		float temp = 0.0;
-//
-//					   //reset gloabl variable i.e flag to scheduler model
-//					   		//event_val=0;
-//
-//					   		Sensor_enable();
-//					   		timerWaitus(80);
-//					   		while(timer_flag!=1);
-//					   		i2c_write(write_buf,1);
-//					   		timerWaitus(10);
-//					   		while(timer_flag!=1);
-//					   		temp=i2c_read(read_buf,2);
-//					   		LOG_INFO("Temp is %f",temp);
-//					   		Sensor_disable();		//disables all the gpio pins
-//	}
-
 /* Function 	: get_event
  * Description  : It will store and clear the set bit and compare the bit with the flags to pass to event
  * */
@@ -134,62 +110,9 @@ uint32_t get_event(){
 
 
 }
-/* Function 	: temp_read_ble(float temp)
- * Description  :This function takes the result temp value calculated from the sensor and then converts
- * 	Return		: No return value
- * 	Ref:silicon labs soc temperature example
-*/
-void temp_read_ble(float temp){
-		uint8_t htmTempBuffer[5]; /* Stores the temperature data in the Health Thermometer (HTM) format. */
-		uint32_t temperature;   /* Stores the temperature data read from the sensor in the correct format */
-		uint8_t *p = htmTempBuffer; /* Pointer to HTM temperature buffer needed for converting values to bitstream. */
-		//uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no temperature type. */
-
-		/* Convert flags to bitstream and append them in the HTM temperature data buffer (htmTempBuffer) */
-		UINT8_TO_BITSTREAM(p,0);
-		//LOG_INFO("uint8 to bitstream done\n");
-		/* Convert sensor data to correct temperature format */
-		temperature = FLT_TO_UINT32(temp*1000, -3);
-		//displayPrintf(DISPLAY_ROW_TEMPVALUE,temperature);
-		/* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
-		UINT32_TO_BITSTREAM(p, temperature);
-		/* Send indication of the temperature in htmTempBuffer to all "listening" clients.
-		* This enables the Health Thermometer in the Blue Gecko app to display the temperature.
-		*  0xFF as connection ID will send indications to all connections. */
-		//if the indicate is set,then it will send the notification and bitstream.
-		displayPrintf(DISPLAY_ROW_TEMPVALUE,"Temp:%f",temp);
-		if(bool_flag==1)
-		{
-				//BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF, gattdb_temperature_measurement, 5, htmTempBuffer));
-		}
-}
 
 void switch_relay_state(uint32_t lum)
 {
-
-	//luminosity is less than threshold value switch on relay
-/*	if(lum<LUX_THRESHOLD)
-	{
-		GPIO_PinOutSet(RELAY_port,RELAY_pin);
-	    displayPrintf(DISPLAY_ROW_ACTION,"RELAY ON");
-	    op=GPIO_PinInGet(RELAY_port,RELAY_pin);
-		LOG_INFO("relay on status with val %d************\n\r",op);
-
-		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op));
-	}
-	//luminosity is greater than threshold value switch off relay
-	else{
-		GPIO_PinOutClear(RELAY_port,RELAY_pin);
-		displayPrintf(DISPLAY_ROW_ACTION,"RELAY OFF");
-		op2=GPIO_PinInGet(RELAY_port,RELAY_pin);
-		LOG_INFO("relay off status with val %d************\n\r",op2);
-
-		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op2));
-	}*/
-		uint32_t op_state;
-		uint8_t buffer_op;
-		uint8_t *ptr_op=buffer_op;
-
 
 	if(lum<LUX_THRESHOLD){
 	GPIO_PinOutSet(RELAY_port,RELAY_pin);
@@ -243,7 +166,7 @@ void lux_read_ble(uint32_t lux)
 */
 void state_machine(struct gecko_cmd_packet *evt) {
 
-	uint16_t             ret;
+
 	if (BGLIB_MSG_ID(evt->header) != gecko_evt_system_external_signal_id) {
 			return;
 		}

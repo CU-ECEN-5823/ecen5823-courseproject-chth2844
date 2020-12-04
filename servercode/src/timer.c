@@ -38,7 +38,7 @@ void LETIMER_setup(void)
 {
 
 	// DOS
-	uint32_t      temp, frequency;
+	//uint32_t      temp, frequency;
 
 	  const LETIMER_Init_TypeDef LETIMER_INITIAL_CONFIG = {
 		//DOS .enable = true,               /* Start counting when init completed. */
@@ -68,7 +68,7 @@ void LETIMER_setup(void)
 
 
   	  LETIMER_CompareSet(LETIMER0, 0, comp0);   // set comp0/top value
-      temp = LETIMER_CompareGet (LETIMER0, 0); // DOS sanity check, read it back
+      //temp = LETIMER_CompareGet (LETIMER0, 0); // DOS sanity check, read it back
 
   	  // DOS LETIMER_TopSet(LETIMER0, comp0);
 
@@ -88,12 +88,12 @@ void LETIMER_setup(void)
   	  //LETIMER_Enable(LETIMER0, true);
 
     // check the LETIMER0 frequency
-  	frequency = CMU_ClockFreqGet (cmuClock_LETIMER0);
+  	//frequency = CMU_ClockFreqGet (cmuClock_LETIMER0);
 
   	// read it a few times to make sure it's running
-  	temp = LETIMER_CounterGet (LETIMER0);
-  	temp = LETIMER_CounterGet (LETIMER0);
-  	temp = LETIMER_CounterGet (LETIMER0);
+  	//temp = LETIMER_CounterGet (LETIMER0);
+  	//temp = LETIMER_CounterGet (LETIMER0);
+  	//temp = LETIMER_CounterGet (LETIMER0);
 
 }
 /* Function 	: timerWaitus()

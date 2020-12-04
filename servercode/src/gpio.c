@@ -3,6 +3,7 @@
  *
  *  Created on: Dec 12, 2018
  *      Author: Dan Walkes
+ *      Rucha,Chirayu
  */
 #include "gpio.h"
 #include "em_gpio.h"
@@ -97,7 +98,6 @@ void GPIO_EVEN_IRQHandler(void)
 void gpioSensorSetOn()
 {
 	GPIO_PinOutSet(LUX_port,LUX_pin);
-
 
 }
 

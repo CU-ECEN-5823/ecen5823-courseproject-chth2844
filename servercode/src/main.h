@@ -2,7 +2,7 @@
  * main.h
  *
  *  Created on: Sep 9, 2020
- *      Author: rucha
+ *      Author: rucha & chirayu
  */
 
 #ifndef SRC_MAIN_H_

@@ -21,7 +21,7 @@
 
 
 
-extern uint32_t timestamp;
+
 /**
  * @return a timestamp value for the logger, typically based on a free running timer.
  * This will be printed at the beginning of each log message.
