@@ -32,7 +32,9 @@
 #include "gecko_ble_errors.h"
 #include "display.h"
 #include "gpio.h"
-//float temp;
+#define ENABLE_SENSOR  0x03
+#define DISABLE_SENSOR 0x00
+
 Lux_Event_t         lux_event;
 State_t           currentState;
 State_t    nextState = STATE0_TIMER_WAIT;
@@ -111,6 +113,18 @@ uint32_t get_event(){
 
 }
 
+
+/*
+ * Function Name: void switch_relay_state(uint32_t lum)
+ *
+ * Function Description: Switches relay on or off depending upon luminosity
+ * .
+ * Parameters:
+ *
+ *           uint32_t lum: Luminosity
+ *
+ * Returns: None
+ */
 void switch_relay_state(uint32_t lum)
 {
 
@@ -126,42 +140,45 @@ void switch_relay_state(uint32_t lum)
 		op=0;
 	}
 
-		//op = GPIO_PinInGet(PB0_port, PB0_pin);
+
 		LOG_INFO("relay Status = %d\n", op);
 		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_relay_state,0,1,&op));
 		BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_relay_state,1,&op));
 }
 
+/*
+ * Function Name: void lux_read_ble(uint32_t lux)
+ *
+ * Function Description: Transmits luminosity to client
+ * .
+ * Parameters:
+ *
+ *           uint32_t lux: Luminosity measurment to be transmitted
+ *
+ * Returns: None
+ */
 void lux_read_ble(uint32_t lux)
 {
 
 
 	uint8_t lux_buffer[1];
-	//uint8_t flags = 0x00;
-	//uint32_t lux_val;
+
     uint8_t *ptr =  lux_buffer;
-  //  UINT8_TO_BITSTREAM(p,0);
 
-
-//    lux_val=FLT_TO_UINT32(lux,0);
-
-	uint32_t lux_val;
+     uint32_t lux_val;
 	 lux_val=FLT_TO_UINT32(lux,-3);
-    /* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
+    /* Convert luminosity to bitstream and place it in the HTM temperature data buffer  */
     UINT32_TO_BITSTREAM(ptr, lux_val);
 
     BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_send_characteristic_notification(0xFF,gattdb_sensor_reading, 1, lux_buffer));
 
 }
 /* Function 	:state_machine(struct gecko_cmd_packet *evt)
- * Description  :This state machine is used to calculate the temperature wherein:
- * 				state 1:stateidle checks for the UF flag to set after every 3 sec,if set it initiates i2c,
- * 				sensor is enabled and waits for power up 80ms
- * 				state2:once the comp1 flag is set because of 80 ms timer up,it will intiate write seq
- * 				state3:once the write seq is completed wait for 10.8ms
- * 				state4:after comp1 flag set after 10.8 msec it will read the data
- * 				state 5:after read transfer done,it will calculate temp(send thrgh ble)and then disable sensor and irq
+ *
+ * Description  :This event-driven state machine is used to calculate luminosity
+ *
  * 	Return		: No return value
+ *
  * 	Ref:silicon labs soc temperature example
 */
 void state_machine(struct gecko_cmd_packet *evt) {
@@ -207,7 +224,7 @@ void state_machine(struct gecko_cmd_packet *evt) {
 #endif
 				InitI2C();      //Initialize I2C peripheral
 				sensor_enable=1;
-				i2c_write_command(TSL2561_REG_CONTROL,0x03);
+				i2c_write_command(TSL2561_REG_CONTROL,ENABLE_SENSOR);
 				timerWaitus(420000);
 				nextState=STATE2_READ_ADC;
 			}
@@ -223,9 +240,7 @@ void state_machine(struct gecko_cmd_packet *evt) {
 #ifdef DEBUG
 				LOG_INFO("2");
 #endif
-//				for (int i = 0; i < 1750000; ) {
-//						  i=i+1;
-//					}
+
 				SLEEP_SleepBlockBegin(sleepEM2);
 				get_ADC_Channel_values(&channel1,&channel0);
 				nextState = STATE3_REPORT;
@@ -249,7 +264,7 @@ void state_machine(struct gecko_cmd_packet *evt) {
 				switch_relay_state(lux2); //control relay state
 
 
-                i2c_write_command(TSL2561_REG_CONTROL,0x00); //power down sensor
+                i2c_write_command(TSL2561_REG_CONTROL,DISABLE_SENSOR); //power down sensor
 				sensor_enable=0; //sensor disabled
 				gpioSensorSetOff(); //turn sensor off
 				DisableI2C(); //Disable i2c clock and gpio pins

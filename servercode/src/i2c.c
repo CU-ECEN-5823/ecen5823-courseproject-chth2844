@@ -110,7 +110,18 @@ void DisableI2C()
 	CMU_ClockEnable (cmuClock_I2C0, false); // DOS
 }
 
-
+/*
+ * Function Name: void i2c_write_command(uint8_t command,uint8_t opcode)
+ *
+ * Function Description: Writes to opcode to particular sensor register
+ * .
+ * Parameters:
+ *
+ *           uint8_t command: Command to be written to sensor
+ *           uint8_t opcode:  Opcode to be written to sensor
+ *
+ * Returns: None
+ */
 void i2c_write_command(uint8_t command,uint8_t opcode)
 {
 
@@ -131,6 +142,18 @@ void i2c_write_command(uint8_t command,uint8_t opcode)
 
 }
 
+/*
+ * Function Name: void i2c_write_command(uint8_t command,uint8_t opcode)
+ *
+ * Function Description: Reads contents of register from sensor
+ * .
+ * Parameters:
+ *
+ *           uint8_t command: Register to be accessed
+ *
+ *
+ * Returns: None
+ */
 void i2c_read(uint8_t command)
 {
 
@@ -147,6 +170,17 @@ void i2c_read(uint8_t command)
 
 }
 
+/*
+ * Function Name: void i2c_write_byte(uint8_t byte)
+ *
+ * Function Description: Writes a byte of data to sensor
+ * .
+ * Parameters:
+ *
+ *          uint8_t byte: Byte to be written to Sensor
+ *
+ * Returns: None
+ */
 void i2c_write_byte(uint8_t byte)
 {
 	write_command[0]=byte;
@@ -158,6 +192,18 @@ void i2c_write_byte(uint8_t byte)
 
 }
 
+/*
+ * Function Name: void get_ADC_Channel_values(double* ch1,double* ch0)
+ *
+ * Function Description: Gets ADC Channel values from luminosity sensor
+ * .
+ * Parameters:
+ *
+ *          double* ch1: Pointer to variable which stores ADC ch1 value
+ *          double* ch0: Pointer to variable which stores ADC ch0 value
+ *
+ * Returns: None
+ */
 void get_ADC_Channel_values(double* ch1,double* ch0)
 {
 
@@ -168,6 +214,21 @@ void get_ADC_Channel_values(double* ch1,double* ch0)
     *ch0=read_buffer[0]+read_buffer[1]*256;
 }
 
+/*
+ * Function Name: void calculate_Lux(double ch1,double ch0,double* result)
+ *
+ * Function Description: Calculates luminosity from ADC Channel Values
+ * .
+ * Parameters:
+ *
+ *          double ch1:   ADC ch1 value
+ *
+ *          double ch0:   ADC ch0 value
+ *
+ *          double* result: Pointer to Variable which stores calculated luminosity
+ *
+ * Returns: None
+ */
 void calculate_Lux(double ch1,double ch0,double* result)
 {
 	double ratio;

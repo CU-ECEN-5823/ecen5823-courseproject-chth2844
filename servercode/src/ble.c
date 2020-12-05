@@ -247,10 +247,10 @@ void handle_ble_event(struct gecko_cmd_packet *evt)
 
 			//initialize variables for the ble client state machine
 
-			//static float temperature;	//to store the float temperature value
-			uint8_t *relay_ptr,*sensor_ptr,*data_tr;
-			static uint8_t i=0;
-			static uint8_t handler_arr[10],char_handler_arr[10];
+
+			uint8_t *relay_ptr,*sensor_ptr;
+
+
 
 
 			switch (BGLIB_MSG_ID(evt->header))
@@ -554,8 +554,7 @@ void initProperties(void)
 // Parse advertisements looking for advertised Health Thermometer service
 uint8_t findServiceInAdvertisement(uint8_t *data, uint8_t len)
 {
-  uint8_t adFieldLength;
-  uint8_t adFieldType;
+
   uint8_t i = 0;
   // Parse advertisement packet
   LOG_INFO("parse ad\n\r");
